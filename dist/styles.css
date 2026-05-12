@@ -1,0 +1,328 @@
+/* ==========================================================================
+   @iqtechnology/ff-forms-react — default stylesheet v2
+   All class names are namespaced with ff-form__ to avoid collisions.
+   ========================================================================== */
+
+.ff-form {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #111827;
+  max-width: 860px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.ff-form *, .ff-form *::before, .ff-form *::after { box-sizing: inherit; }
+
+/* -------------------------------------------------------------------------- Loading / error */
+.ff-form__loading { padding: 2.5rem; text-align: center; color: #6b7280; }
+.ff-form__load-error {
+  padding: 1rem 1.25rem; border: 1px solid #fca5a5; border-radius: 8px;
+  background: #fef2f2; color: #991b1b;
+}
+
+/* -------------------------------------------------------------------------- Header */
+.ff-form__header { margin-bottom: 1.5rem; }
+.ff-form__title { margin: 0 0 .375rem; font-size: 1.5rem; font-weight: 700; }
+.ff-form__description { margin: 0; color: #6b7280; }
+
+/* -------------------------------------------------------------------------- Validation banner */
+.ff-form__validation-banner {
+  padding: .75rem 1rem; margin-bottom: 1rem; border-radius: 8px;
+  border: 1px solid #fca5a5; background: #fef2f2; color: #991b1b;
+}
+
+/* ==========================================================================
+   Page list (multi-page forms)
+   ========================================================================== */
+.ff-form__page-list { display: flex; flex-direction: column; gap: .625rem; }
+
+.ff-form__page-card {
+  display: flex; align-items: center; gap: 1rem;
+  width: 100%; padding: 1rem 1.25rem;
+  border: 1px solid #e5e7eb; border-radius: 12px;
+  background: #fff; cursor: pointer; text-align: left;
+  transition: border-color .15s, box-shadow .15s;
+  font-family: inherit; font-size: 15px;
+}
+.ff-form__page-card:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(59,130,246,.12); }
+.ff-form__page-card--error { border-color: #fca5a5; }
+
+.ff-form__page-card-number {
+  flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%;
+  background: #eff6ff; color: #2563eb; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; font-size: .875rem;
+}
+.ff-form__page-card--error .ff-form__page-card-number { background: #fef2f2; color: #dc2626; }
+
+.ff-form__page-card-info { flex: 1; display: flex; flex-direction: column; gap: .125rem; }
+.ff-form__page-card-title { font-weight: 600; }
+.ff-form__page-card-desc { font-size: .8125rem; color: #6b7280; }
+.ff-form__page-card-meta { font-size: .75rem; color: #9ca3af; }
+
+.ff-form__page-card-right { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+.ff-form__page-card-badge {
+  padding: .125rem .5rem; border-radius: 99px; font-size: .75rem; font-weight: 600;
+}
+.ff-form__page-card-badge--error { background: #fef2f2; color: #dc2626; }
+.ff-form__page-card-badge--warn  { background: #fffbeb; color: #b45309; }
+.ff-form__page-card-arrow { font-size: 1.25rem; color: #9ca3af; }
+
+/* ==========================================================================
+   Page detail view
+   ========================================================================== */
+.ff-form__page-detail-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.ff-form__page-detail-pager { font-size: .8125rem; color: #9ca3af; }
+
+.ff-form__page-title { margin: 0 0 .375rem; font-size: 1.25rem; font-weight: 600; }
+.ff-form__page-description { margin: 0 0 1rem; color: #6b7280; }
+
+.ff-form__page-nav {
+  display: flex; gap: .75rem; margin-top: 1.5rem;
+  padding-top: 1.25rem; border-top: 1px solid #e5e7eb;
+}
+
+/* ==========================================================================
+   Section accordion
+   ========================================================================== */
+.ff-form__sections { display: flex; flex-direction: column; gap: .5rem; margin-top: .75rem; }
+
+.ff-form__section-accordion {
+  border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;
+  background: #fff;
+}
+.ff-form__section-accordion--error { border-color: #fca5a5; }
+
+.ff-form__section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: .875rem 1.25rem;
+  background: #f9fafb; border: none; cursor: pointer;
+  font-family: inherit; font-size: 15px; font-weight: 600; color: #111827;
+  text-align: left; transition: background .1s;
+}
+.ff-form__section-header:hover { background: #f3f4f6; }
+.ff-form__section-accordion--open .ff-form__section-header { background: #eff6ff; }
+
+.ff-form__section-header-title { flex: 1; }
+.ff-form__section-header-right { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+.ff-form__section-badge {
+  padding: .125rem .5rem; border-radius: 99px; font-size: .75rem; font-weight: 600;
+}
+.ff-form__section-badge--error { background: #fef2f2; color: #dc2626; }
+.ff-form__section-badge--warn  { background: #fffbeb; color: #b45309; }
+.ff-form__section-chevron { font-size: .75rem; color: #6b7280; transition: transform .2s; }
+
+.ff-form__section-body { padding: 1rem 1.25rem; }
+.ff-form__section-description { margin: 0 0 .875rem; font-size: .875rem; color: #6b7280; }
+
+/* Legacy flat section (non-accordion) */
+.ff-form__section { margin-bottom: 1.5rem; padding: 1rem 1.25rem; border: 1px solid #e5e7eb; border-radius: 10px; }
+.ff-form__section-title { margin: 0 0 .25rem; font-size: 1rem; font-weight: 600; }
+
+/* ==========================================================================
+   Fields
+   ========================================================================== */
+.ff-form__field { margin-bottom: 1.25rem; }
+.ff-form__field--error .ff-form__input,
+.ff-form__field--error .ff-form__textarea,
+.ff-form__field--error .ff-form__select { border-color: #f87171; }
+
+.ff-form__label { display: block; margin-bottom: .375rem; font-size: .875rem; font-weight: 500; }
+.ff-form__required { color: #ef4444; }
+.ff-form__field-description { margin: 0 0 .375rem; font-size: .8125rem; color: #6b7280; }
+.ff-form__error { display: block; margin-top: .25rem; font-size: .8125rem; color: #dc2626; }
+
+/* -------------------------------------------------------------------------- Inputs */
+.ff-form__input,
+.ff-form__textarea,
+.ff-form__select {
+  display: block; width: 100%;
+  padding: .5rem .75rem;
+  font-size: .9375rem; font-family: inherit; color: #111827;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+}
+.ff-form__input:focus, .ff-form__textarea:focus, .ff-form__select:focus {
+  outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+}
+.ff-form__input:disabled, .ff-form__textarea:disabled, .ff-form__select:disabled {
+  background: #f3f4f6; color: #9ca3af; cursor: not-allowed;
+}
+.ff-form__input[readonly], .ff-form__textarea[readonly] { background: #f9fafb; }
+.ff-form__textarea { resize: vertical; min-height: 80px; }
+.ff-form__select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .75rem center; padding-right: 2rem;
+}
+select[multiple].ff-form__select { background-image: none; padding-right: .75rem; min-height: 100px; }
+
+/* -------------------------------------------------------------------------- Checkbox */
+.ff-form__checkbox-group { display: flex; flex-direction: column; gap: .5rem; }
+.ff-form__checkbox-label {
+  display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .9375rem;
+}
+.ff-form__checkbox { width: 1rem; height: 1rem; accent-color: #3b82f6; cursor: pointer; }
+.ff-form__checkbox-text { }
+
+/* -------------------------------------------------------------------------- Switch */
+.ff-form__switch-label { display: inline-flex; align-items: center; gap: .625rem; cursor: pointer; }
+.ff-form__switch-input { position: absolute; opacity: 0; width: 0; height: 0; }
+.ff-form__switch-track {
+  position: relative; display: inline-block;
+  width: 2.75rem; height: 1.5rem;
+  background: #d1d5db; border-radius: 999px; transition: background .2s;
+  flex-shrink: 0;
+}
+.ff-form__switch-input:checked + .ff-form__switch-track { background: #3b82f6; }
+.ff-form__switch-input:disabled + .ff-form__switch-track { opacity: .5; cursor: not-allowed; }
+.ff-form__switch-thumb {
+  position: absolute; top: .1875rem; left: .1875rem;
+  width: 1.125rem; height: 1.125rem;
+  background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .2s;
+}
+.ff-form__switch-input:checked ~ .ff-form__switch-track .ff-form__switch-thumb,
+.ff-form__switch-input:checked + .ff-form__switch-track .ff-form__switch-thumb {
+  transform: translateX(1.25rem);
+}
+.ff-form__switch-text { font-size: .9375rem; }
+
+/* -------------------------------------------------------------------------- Counter */
+.ff-form__counter { display: inline-flex; align-items: center; gap: 0; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
+.ff-form__btn--counter {
+  width: 2.5rem; height: 2.5rem; padding: 0;
+  border: none; border-radius: 0; background: #f9fafb; font-size: 1.25rem; font-weight: 400;
+  color: #374151; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .1s;
+}
+.ff-form__btn--counter:hover:not(:disabled) { background: #f3f4f6; }
+.ff-form__btn--counter:disabled { color: #d1d5db; cursor: not-allowed; }
+.ff-form__counter-value { min-width: 3rem; text-align: center; font-size: .9375rem; font-weight: 600; padding: 0 .5rem; }
+
+/* -------------------------------------------------------------------------- Choice (pill buttons) */
+.ff-form__choice-group { display: flex; flex-wrap: wrap; gap: .5rem; }
+.ff-form__choice-btn {
+  padding: .4375rem 1rem; border-radius: 999px;
+  border: 1.5px solid #d1d5db; background: #fff;
+  font-family: inherit; font-size: .875rem; font-weight: 500; color: #374151;
+  cursor: pointer; transition: all .15s;
+}
+.ff-form__choice-btn:hover:not(.ff-form__choice-btn--disabled) { border-color: #93c5fd; background: #eff6ff; }
+.ff-form__choice-btn--selected { border-color: #2563eb; background: #2563eb; color: #fff; }
+.ff-form__choice-btn--selected:hover { background: #1d4ed8; border-color: #1d4ed8; }
+.ff-form__choice-btn--disabled { opacity: .5; cursor: not-allowed; }
+
+/* -------------------------------------------------------------------------- Placeholder */
+.ff-form__placeholder { margin: .25rem 0; }
+.ff-form__placeholder--h1 { font-size: 1.75rem; font-weight: 700; }
+.ff-form__placeholder--h2 { font-size: 1.5rem; font-weight: 700; }
+.ff-form__placeholder--h3 { font-size: 1.25rem; font-weight: 600; }
+.ff-form__placeholder--h4 { font-size: 1.125rem; font-weight: 600; }
+.ff-form__placeholder--h5, .ff-form__placeholder--h6 { font-size: 1rem; font-weight: 600; }
+.ff-form__placeholder--p { font-size: .9375rem; color: #374151; }
+
+/* -------------------------------------------------------------------------- Media / File */
+.ff-form__media-field { display: flex; flex-direction: column; gap: .75rem; }
+.ff-form__media-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.ff-form__media-item {
+  display: flex; align-items: center; gap: .375rem;
+  padding: .375rem .625rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: .8125rem;
+}
+.ff-form__media-preview { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; }
+.ff-form__media-name { color: #374151; }
+.ff-form__media-empty { font-size: .875rem; color: #9ca3af; }
+.ff-form__select-loading { font-size: .875rem; color: #6b7280; padding: .5rem 0; }
+
+/* -------------------------------------------------------------------------- Location */
+.ff-form__location { display: flex; flex-direction: column; gap: .375rem; }
+.ff-form__location-row { display: flex; gap: .5rem; align-items: center; }
+.ff-form__location-row .ff-form__input { flex: 1; }
+.ff-form__btn--location {
+  flex-shrink: 0; padding: 0 .75rem; height: 2.375rem;
+  border: 1px solid #d1d5db; border-radius: 8px; background: #fff;
+  font-size: 1rem; cursor: pointer;
+}
+.ff-form__btn--location:hover { background: #f9fafb; }
+.ff-form__location-link { font-size: .8125rem; color: #2563eb; text-decoration: none; }
+.ff-form__location-link:hover { text-decoration: underline; }
+
+/* -------------------------------------------------------------------------- Subform */
+.ff-form__subform { display: flex; flex-direction: column; gap: .625rem; }
+.ff-form__subform-entry { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.ff-form__subform-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: .75rem 1rem; background: #f9fafb;
+  border: none; cursor: pointer; font-family: inherit; font-size: .9375rem; font-weight: 600; color: #111827;
+  text-align: left;
+}
+.ff-form__subform-header:hover { background: #f3f4f6; }
+.ff-form__subform-header-title { flex: 1; }
+.ff-form__subform-header-right { display: flex; align-items: center; gap: .5rem; }
+.ff-form__subform-remove {
+  font-size: .75rem; font-weight: 500; color: #ef4444;
+  cursor: pointer; padding: .125rem .375rem; border-radius: 4px;
+}
+.ff-form__subform-remove:hover { background: #fef2f2; }
+.ff-form__subform-body { padding: .75rem 1rem; }
+
+/* -------------------------------------------------------------------------- Labelless fields (placeholder, button) */
+.ff-form__field--labelless { margin-bottom: .75rem; }
+
+/* -------------------------------------------------------------------------- Date / datetime inputs */
+.ff-form__input--date { cursor: pointer; }
+
+/* -------------------------------------------------------------------------- Unsupported */
+.ff-form__field-unsupported {
+  padding: .5rem .75rem; border: 1px dashed #fbbf24; border-radius: 6px;
+  background: #fefce8; font-size: .8125rem; color: #92400e;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.ff-form__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .5625rem 1.25rem; font-size: .9375rem; font-family: inherit; font-weight: 500;
+  border-radius: 8px; border: 1px solid transparent; cursor: pointer;
+  transition: background .15s, border-color .15s, opacity .15s;
+  line-height: 1;
+}
+.ff-form__btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.ff-form__btn--submit { background: #2563eb; color: #fff; border-color: #2563eb; }
+.ff-form__btn--submit:hover:not(:disabled) { background: #1d4ed8; }
+
+.ff-form__btn--draft { background: #fff; color: #374151; border-color: #d1d5db; }
+.ff-form__btn--draft:hover:not(:disabled) { background: #f9fafb; }
+
+.ff-form__btn--back {
+  background: transparent; color: #2563eb; border-color: transparent;
+  padding-left: 0; font-size: .9375rem;
+}
+.ff-form__btn--back:hover { text-decoration: underline; }
+
+.ff-form__btn--page-nav { background: #fff; color: #374151; border-color: #d1d5db; }
+.ff-form__btn--page-nav:hover:not(:disabled) { background: #f9fafb; }
+
+.ff-form__btn--upload { background: #fff; color: #374151; border-color: #d1d5db; font-size: .875rem; padding: .4rem .875rem; }
+.ff-form__btn--upload:hover:not(:disabled) { background: #f9fafb; }
+
+.ff-form__btn--remove { background: transparent; color: #ef4444; border-color: transparent; padding: .25rem .5rem; font-size: .8125rem; }
+.ff-form__btn--remove:hover:not(:disabled) { background: #fef2f2; }
+
+.ff-form__btn--add { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; font-size: .875rem; padding: .4rem .875rem; }
+.ff-form__btn--add:hover:not(:disabled) { background: #dcfce7; }
+
+.ff-form__btn--field { background: #2563eb; color: #fff; border-color: #2563eb; }
+.ff-form__btn--field:hover:not(:disabled) { background: #1d4ed8; }
+
+/* Actions bar */
+.ff-form__actions {
+  display: flex; gap: .75rem; margin-top: 2rem;
+  padding-top: 1.5rem; border-top: 1px solid #e5e7eb;
+}
