@@ -524,7 +524,8 @@ function normalizeSubmissionData(params) {
       for (const field of section.fields) {
         const value = data[field.id];
         if (field.type === "subform") {
-          result[field.id] = normalizeSubform(field.settings?.id, value, schema, submittedAt, field.settings?.allowMany);
+          const allowMany = Boolean(field.settings?.allowMany ?? field.settings?.allow_many ?? field.settings?.isMultiple ?? field.settings?.is_multiple);
+          result[field.id] = normalizeSubform(field.settings?.id, value, schema, submittedAt, allowMany);
         } else {
           result[field.id] = value;
         }
@@ -533,14 +534,21 @@ function normalizeSubmissionData(params) {
   }
   return result;
 }
+function isNormalizedEntry2(e) {
+  return e !== null && typeof e === "object" && !Array.isArray(e) && "data" in e && "form_version_uuid" in e;
+}
+function extractData(e) {
+  if (isNormalizedEntry2(e)) return e.data;
+  return e;
+}
 function normalizeSubform(key, value, parentSchema, ts, allowMany) {
   const uuid = key ? parentSchema.subforms?.[key]?.uuid ?? "" : "";
   if (allowMany) {
     const arr = Array.isArray(value) ? value : [];
-    return arr.map((e) => ({ form_version_uuid: uuid, submitted_at: ts, data: e }));
+    return arr.map((e) => ({ form_version_uuid: uuid, submitted_at: ts, data: extractData(e) }));
   }
   if (value && typeof value === "object" && !Array.isArray(value)) {
-    return { form_version_uuid: uuid, submitted_at: ts, data: value };
+    return { form_version_uuid: uuid, submitted_at: ts, data: extractData(value) };
   }
   return void 0;
 }

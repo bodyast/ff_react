@@ -10,7 +10,8 @@ export function normalizeSubmissionData(params: NormalizeParams): Record<string,
       for (const field of section.fields) {
         const value = data[field.id];
         if (field.type === "subform") {
-          result[field.id] = normalizeSubform(field.settings?.id as string | undefined, value, schema, submittedAt, field.settings?.allowMany as boolean | undefined);
+          const allowMany = Boolean(field.settings?.allowMany ?? field.settings?.allow_many ?? field.settings?.isMultiple ?? field.settings?.is_multiple);
+          result[field.id] = normalizeSubform(field.settings?.id as string | undefined, value, schema, submittedAt, allowMany);
         } else {
           result[field.id] = value;
         }
@@ -20,14 +21,29 @@ export function normalizeSubmissionData(params: NormalizeParams): Record<string,
   return result;
 }
 
+function isNormalizedEntry(e: unknown): e is NormalizedSubformEntry {
+  return (
+    e !== null &&
+    typeof e === "object" &&
+    !Array.isArray(e) &&
+    "data" in (e as object) &&
+    "form_version_uuid" in (e as object)
+  );
+}
+
+function extractData(e: unknown): Record<string, unknown> {
+  if (isNormalizedEntry(e)) return e.data;
+  return e as Record<string, unknown>;
+}
+
 function normalizeSubform(key: string | undefined, value: unknown, parentSchema: FormStructure, ts: string, allowMany?: boolean): NormalizedSubformEntry | NormalizedSubformEntry[] | undefined {
   const uuid = key ? (parentSchema.subforms?.[key]?.uuid ?? "") : "";
   if (allowMany) {
     const arr = Array.isArray(value) ? value : [];
-    return arr.map((e) => ({ form_version_uuid: uuid, submitted_at: ts, data: e as Record<string, unknown> }));
+    return arr.map((e) => ({ form_version_uuid: uuid, submitted_at: ts, data: extractData(e) }));
   }
   if (value && typeof value === "object" && !Array.isArray(value)) {
-    return { form_version_uuid: uuid, submitted_at: ts, data: value as Record<string, unknown> };
+    return { form_version_uuid: uuid, submitted_at: ts, data: extractData(value) };
   }
   return undefined;
 }
