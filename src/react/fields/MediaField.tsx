@@ -33,11 +33,13 @@ export function MediaField({
   }, []);
 
   const isImage = field.type === "image";
-  const maxFiles = settings.maxFiles as number | undefined;
+  const maxFiles = (settings.maxFiles ?? settings.max_files) as number | undefined;
   const allowMany = Boolean(
-    settings.allowMany ?? settings.isMultiple ?? (maxFiles !== undefined && maxFiles > 1)
+    settings.allowMany ?? settings.allow_many ??
+    settings.isMultiple ?? settings.is_multiple ??
+    (maxFiles !== undefined && maxFiles > 1)
   );
-  const allowedFormats = settings.allowedFormats as string[] | undefined;
+  const allowedFormats = (settings.allowedFormats ?? settings.allowed_formats) as string[] | undefined;
 
   const entries: MediaEntry[] = Array.isArray(value)
     ? (value as MediaEntry[])

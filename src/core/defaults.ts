@@ -6,7 +6,7 @@ export function applyDefaultValues(schema: FormStructure, data: Record<string, u
     for (const section of page.sections) {
       for (const field of section.fields) {
         const hasValue = result[field.id] !== undefined && result[field.id] !== null;
-        const def = field.settings?.defaultValue;
+        const def = field.settings?.defaultValue ?? field.settings?.default_value;
         if (!hasValue && def !== undefined) result[field.id] = def;
       }
     }

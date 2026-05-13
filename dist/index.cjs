@@ -50,7 +50,7 @@ function applyDefaultValues(schema, data) {
     for (const section of page.sections) {
       for (const field of section.fields) {
         const hasValue = result[field.id] !== void 0 && result[field.id] !== null;
-        const def = field.settings?.defaultValue;
+        const def = field.settings?.defaultValue ?? field.settings?.default_value;
         if (!hasValue && def !== void 0) result[field.id] = def;
       }
     }
@@ -294,8 +294,24 @@ function toLogicObject(v) {
   }
   return { value: v };
 }
+function isNormalizedEntry(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v) && "data" in v && "form_version_uuid" in v;
+}
+function flattenSubformArrays(data) {
+  const result = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (Array.isArray(value) && value.length > 0 && isNormalizedEntry(value[0])) {
+      result[key] = value.map(
+        (entry) => isNormalizedEntry(entry) ? entry.data : entry
+      );
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
 function buildEvaluationContext(data) {
-  return toLogicObject(data);
+  return toLogicObject(flattenSubformArrays(data));
 }
 function evaluateDependencies(params) {
   const { schema, data: initialData, changedFieldId } = params;
@@ -461,8 +477,16 @@ function resolveActionValue(action, data, overrides) {
   }
 }
 function isTriggeredBy(dep, fieldId) {
-  if (dep.sources?.includes(fieldId)) return true;
   if (dep.trigger === fieldId) return true;
+  if (dep.sources) {
+    for (const src of dep.sources) {
+      if (src === fieldId) return true;
+      if (src.includes(".*")) {
+        const parent = src.split(".*")[0];
+        if (fieldId === parent || fieldId.startsWith(parent + ".")) return true;
+      }
+    }
+  }
   return false;
 }
 function collectAllFieldIds(schema) {
@@ -628,6 +652,13 @@ function buildFieldStates(schema, stateOverrides) {
   const states = {};
   for (const page of schema.pages) {
     for (const section of page.sections) {
+      const sectionOv = stateOverrides[section.id] ?? {};
+      states[section.id] = {
+        hidden: sectionOv.hidden ?? Boolean(section.settings?.hidden),
+        disabled: sectionOv.disabled ?? false,
+        readonly: sectionOv.readonly ?? false,
+        required: sectionOv.required ?? false
+      };
       for (const field of section.fields) {
         const schemaState = {
           hidden: Boolean(field.settings?.hidden),
@@ -1076,7 +1107,7 @@ function NumberField({
 }) {
   const settings = field.settings ?? {};
   const isInteger = field.type === "integer";
-  const isCounter = Boolean(settings.isCounter);
+  const isCounter = Boolean(settings.isCounter ?? settings.is_counter);
   const step = settings.step !== void 0 ? Number(settings.step) : isInteger ? 1 : void 0;
   const min = settings.min !== void 0 ? Number(settings.min) : void 0;
   const max = settings.max !== void 0 ? Number(settings.max) : void 0;
@@ -1151,8 +1182,8 @@ function SelectField({
   onChange
 }) {
   const settings = field.settings ?? {};
-  const isMultiple = Boolean(settings.isMultiple ?? settings.allowMany);
-  const staticOptions = field.options ?? [];
+  const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
+  const staticOptions = (field.options?.length ? field.options : void 0) ?? settings.options ?? [];
   const [options, setOptions] = (0, import_react2.useState)(staticOptions);
   const [lookupLoading, setLookupLoading] = (0, import_react2.useState)(false);
   (0, import_react2.useEffect)(() => {
@@ -1241,9 +1272,9 @@ function CheckboxField({
   onChange
 }) {
   const settings = field.settings ?? {};
-  const isSwitch = Boolean(settings.isSwitch);
-  const isMultiple = Boolean(settings.isMultiple ?? settings.allowMany);
-  const options = field.options ?? [];
+  const isSwitch = Boolean(settings.isSwitch ?? settings.is_switch);
+  const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
+  const options = (field.options?.length ? field.options : void 0) ?? settings.options ?? [];
   if (isSwitch) {
     const checked = Boolean(value);
     return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "ff-form__switch-label", children: [
@@ -1354,11 +1385,11 @@ function MediaField({
     };
   }, []);
   const isImage = field.type === "image";
-  const maxFiles = settings.maxFiles;
+  const maxFiles = settings.maxFiles ?? settings.max_files;
   const allowMany = Boolean(
-    settings.allowMany ?? settings.isMultiple ?? (maxFiles !== void 0 && maxFiles > 1)
+    settings.allowMany ?? settings.allow_many ?? settings.isMultiple ?? settings.is_multiple ?? (maxFiles !== void 0 && maxFiles > 1)
   );
-  const allowedFormats = settings.allowedFormats;
+  const allowedFormats = settings.allowedFormats ?? settings.allowed_formats;
   const entries = Array.isArray(value) ? value : value && typeof value === "object" ? [value] : typeof value === "string" && value ? [{ uuid: value }] : [];
   async function handleFiles(files) {
     if (!files || files.length === 0 || !uploadMedia) return;
@@ -1669,8 +1700,8 @@ function ChoiceField({
   onChange
 }) {
   const settings = field.settings ?? {};
-  const isMultiple = Boolean(settings.isMultiple ?? settings.allowMany);
-  const options = field.options ?? [];
+  const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
+  const options = (field.options?.length ? field.options : void 0) ?? settings.options ?? [];
   const selectedValues = Array.isArray(value) ? value : value !== void 0 && value !== null ? [value] : [];
   function toggle(optVal) {
     if (disabled || readonly) return;
@@ -1886,6 +1917,7 @@ var DEFAULT_RENDERERS = {
   subform: SubFormField
 };
 function FallbackField({ field }) {
+  console.warn("[ff-forms] unsupported field type:", field.type, "id:", field.id);
   return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "ff-form__field-unsupported", children: [
     "Unsupported field type: ",
     /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("code", { children: field.type })
@@ -2008,7 +2040,7 @@ function SectionAccordion({
       return state?.required && !data[f.id];
     }).length;
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "ff-form__sections", children: sections.map((section) => {
+  return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "ff-form__sections", children: sections.filter((s) => !fieldStates[s.id]?.hidden).map((section) => {
     const isOpen = expanded.has(section.id);
     const errors = sectionErrorCount(section);
     const missing = sectionMissingCount(section);

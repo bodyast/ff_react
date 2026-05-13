@@ -64,7 +64,7 @@ export function SectionAccordion({
 
   return (
     <div className="ff-form__sections">
-      {sections.map((section) => {
+      {sections.filter((s) => !fieldStates[s.id]?.hidden).map((section) => {
         const isOpen = expanded.has(section.id);
         const errors = sectionErrorCount(section);
         const missing = sectionMissingCount(section);

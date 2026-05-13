@@ -13,8 +13,11 @@ export function ChoiceField({
   onChange,
 }: FieldRendererProps) {
   const settings = field.settings ?? {};
-  const isMultiple = Boolean(settings.isMultiple ?? settings.allowMany);
-  const options: FormFieldOption[] = field.options ?? [];
+  const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
+  const options: FormFieldOption[] =
+    (field.options?.length ? field.options : undefined) ??
+    (settings.options as FormFieldOption[] | undefined) ??
+    [];
 
   const selectedValues: (string | number)[] = Array.isArray(value)
     ? (value as (string | number)[])

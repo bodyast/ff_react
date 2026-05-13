@@ -46,8 +46,42 @@ function toLogicObject(v: unknown): unknown {
   return { value: v };
 }
 
+/**
+ * Detect NormalizedSubformEntry: { form_version_uuid, submitted_at, data }.
+ * These are the backend format for subform entries. For JSON Logic evaluation
+ * the rules access fields FLAT (e.g. `current.collection_status.value`), so
+ * we need to unwrap `.data` to the top level before wrapping in toLogicObject.
+ */
+function isNormalizedEntry(v: unknown): v is { data: Record<string, unknown> } {
+  return (
+    v !== null &&
+    typeof v === "object" &&
+    !Array.isArray(v) &&
+    "data" in (v as object) &&
+    "form_version_uuid" in (v as object)
+  );
+}
+
+/**
+ * For arrays that contain NormalizedSubformEntry objects, extract .data so that
+ * JSON Logic rules can access fields directly (e.g. `current.collection_status`).
+ */
+function flattenSubformArrays(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (Array.isArray(value) && value.length > 0 && isNormalizedEntry(value[0])) {
+      result[key] = value.map((entry) =>
+        isNormalizedEntry(entry) ? entry.data : entry
+      );
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 function buildEvaluationContext(data: Record<string, unknown>): Record<string, unknown> {
-  return toLogicObject(data) as Record<string, unknown>;
+  return toLogicObject(flattenSubformArrays(data)) as Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------
@@ -340,8 +374,17 @@ function resolveActionValue(
 // ---------------------------------------------------------------------------
 
 function isTriggeredBy(dep: FormDependency, fieldId: string): boolean {
-  if (dep.sources?.includes(fieldId)) return true;
   if (dep.trigger === fieldId) return true;
+  if (dep.sources) {
+    for (const src of dep.sources) {
+      if (src === fieldId) return true;
+      // Wildcard pattern: "donors.*.collection_status" is triggered when "donors" changes
+      if (src.includes(".*")) {
+        const parent = src.split(".*")[0];
+        if (fieldId === parent || fieldId.startsWith(parent + ".")) return true;
+      }
+    }
+  }
   return false;
 }
 

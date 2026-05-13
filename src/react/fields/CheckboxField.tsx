@@ -9,9 +9,12 @@ export function CheckboxField({
   onChange,
 }: FieldRendererProps) {
   const settings = field.settings ?? {};
-  const isSwitch = Boolean(settings.isSwitch);
-  const isMultiple = Boolean(settings.isMultiple ?? settings.allowMany);
-  const options: FormFieldOption[] = field.options ?? [];
+  const isSwitch = Boolean(settings.isSwitch ?? settings.is_switch);
+  const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
+  const options: FormFieldOption[] =
+    (field.options?.length ? field.options : undefined) ??
+    (settings.options as FormFieldOption[] | undefined) ??
+    [];
 
   // ---------------------------------------------------------------------------
   // Switch mode (single boolean toggle)

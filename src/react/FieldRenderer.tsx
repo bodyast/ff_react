@@ -41,6 +41,7 @@ const DEFAULT_RENDERERS: FieldRenderers = {
 // ---------------------------------------------------------------------------
 
 function FallbackField({ field }: { field: FormField }) {
+  console.warn("[ff-forms] unsupported field type:", field.type, "id:", field.id);
   return (
     <div className="ff-form__field-unsupported">
       Unsupported field type: <code>{field.type}</code>

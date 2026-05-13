@@ -10,7 +10,7 @@ export function NumberField({
 }: FieldRendererProps) {
   const settings = field.settings ?? {};
   const isInteger = field.type === "integer";
-  const isCounter = Boolean(settings.isCounter);
+  const isCounter = Boolean(settings.isCounter ?? settings.is_counter);
   const step = settings.step !== undefined ? Number(settings.step) : isInteger ? 1 : undefined;
   const min = settings.min !== undefined ? Number(settings.min) : undefined;
   const max = settings.max !== undefined ? Number(settings.max) : undefined;

@@ -50,7 +50,8 @@ export function createFormEngine(params: FormEngineParams): FormEngine {
   };
 }
 
-/** Build FieldState map from schema defaults + dependency overrides */
+/** Build FieldState map from schema defaults + dependency overrides.
+ *  Includes section IDs so SectionAccordion can check section-level hidden state. */
 function buildFieldStates(
   schema: FormStructure,
   stateOverrides: Record<string, Partial<FieldState>>
@@ -58,6 +59,15 @@ function buildFieldStates(
   const states: Record<string, FieldState> = {};
   for (const page of schema.pages) {
     for (const section of page.sections) {
+      // Section-level state (hidden comes from section.settings.hidden or dep override)
+      const sectionOv = stateOverrides[section.id] ?? {};
+      states[section.id] = {
+        hidden: sectionOv.hidden ?? Boolean(section.settings?.hidden),
+        disabled: sectionOv.disabled ?? false,
+        readonly: sectionOv.readonly ?? false,
+        required: sectionOv.required ?? false,
+      };
+
       for (const field of section.fields) {
         const schemaState: FieldState = {
           hidden: Boolean(field.settings?.hidden),

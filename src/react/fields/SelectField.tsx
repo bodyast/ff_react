@@ -12,8 +12,11 @@ export function SelectField({
   onChange,
 }: FieldRendererProps) {
   const settings = field.settings ?? {};
-  const isMultiple = Boolean(settings.isMultiple ?? settings.allowMany);
-  const staticOptions: FormFieldOption[] = field.options ?? [];
+  const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
+  const staticOptions: FormFieldOption[] =
+    (field.options?.length ? field.options : undefined) ??
+    (settings.options as FormFieldOption[] | undefined) ??
+    [];
   const [options, setOptions] = useState<FormFieldOption[]>(staticOptions);
   const [lookupLoading, setLookupLoading] = useState(false);
 
