@@ -29,7 +29,14 @@ export function createFormEngine(params: FormEngineParams): FormEngine {
   const listeners = new Set<() => void>();
 
   function notify() { listeners.forEach((l) => l()); }
-  function recompute() { fieldStates = computeStates(schema, data); }
+  function recompute() {
+    const { stateOverrides, dataOverrides } = evaluateDependencies({ schema, data });
+    // Apply computed value overrides (e.g. total_miles = finish - start)
+    if (Object.keys(dataOverrides).length > 0) {
+      data = { ...data, ...dataOverrides };
+    }
+    fieldStates = buildFieldStates(schema, stateOverrides);
+  }
 
   return {
     changeField(fieldId, value) { data = { ...data, [fieldId]: value }; recompute(); notify(); },
@@ -43,28 +50,36 @@ export function createFormEngine(params: FormEngineParams): FormEngine {
   };
 }
 
-/** Exported so SubFormField and other composite components can compute field states */
-export function computeStates(schema: FormStructure, data: Record<string, unknown>): Record<string, FieldState> {
-  const overrides = evaluateDependencies({ schema, data });
+/** Build FieldState map from schema defaults + dependency overrides */
+function buildFieldStates(
+  schema: FormStructure,
+  stateOverrides: Record<string, Partial<FieldState>>
+): Record<string, FieldState> {
   const states: Record<string, FieldState> = {};
   for (const page of schema.pages) {
     for (const section of page.sections) {
       for (const field of section.fields) {
-        const schema_state: FieldState = {
+        const schemaState: FieldState = {
           hidden: Boolean(field.settings?.hidden),
           disabled: Boolean(field.settings?.disabled),
           readonly: Boolean(field.settings?.readonly),
           required: Boolean(field.settings?.required),
         };
-        const ov = overrides[field.id] ?? {};
+        const ov = stateOverrides[field.id] ?? {};
         states[field.id] = {
-          hidden: ov.hidden ?? schema_state.hidden,
-          disabled: ov.disabled ?? schema_state.disabled,
-          readonly: ov.readonly ?? schema_state.readonly,
-          required: ov.required ?? schema_state.required,
+          hidden: ov.hidden ?? schemaState.hidden,
+          disabled: ov.disabled ?? schemaState.disabled,
+          readonly: ov.readonly ?? schemaState.readonly,
+          required: ov.required ?? schemaState.required,
         };
       }
     }
   }
   return states;
+}
+
+/** Exported so SubFormField and other composite components can compute field states */
+export function computeStates(schema: FormStructure, data: Record<string, unknown>): Record<string, FieldState> {
+  const { stateOverrides } = evaluateDependencies({ schema, data });
+  return buildFieldStates(schema, stateOverrides);
 }

@@ -63,19 +63,29 @@ export type EvaluateDependenciesParams = {
   currentStates?: Record<string, Partial<FieldState>>;
 };
 
+export type EvaluateDependenciesResult = {
+  /** FieldState overrides: hidden / disabled / readonly / required */
+  stateOverrides: Record<string, Partial<FieldState>>;
+  /** Computed value overrides: fieldId → new value */
+  dataOverrides: Record<string, unknown>;
+};
+
 /**
  * Full dependency evaluation with JSON Logic, wildcards, and cascading.
- * Returns fieldId → FieldState overrides.
+ * Returns both FieldState overrides and computed data (value) overrides.
  */
 export function evaluateDependencies(
   params: EvaluateDependenciesParams
-): Record<string, Partial<FieldState>> {
-  const { schema, data, changedFieldId } = params;
-  if (!schema.dependencies?.length) return {};
+): EvaluateDependenciesResult {
+  const { schema, data: initialData, changedFieldId } = params;
+  if (!schema.dependencies?.length) return { stateOverrides: {}, dataOverrides: {} };
 
-  const overrides: Record<string, Partial<FieldState>> = {
+  const stateOverrides: Record<string, Partial<FieldState>> = {
     ...(params.currentStates ?? {}),
   };
+  const dataOverrides: Record<string, unknown> = {};
+  // workingData merges initial data + any value overrides applied so far (for cascading)
+  let workingData = initialData;
   const processed = new Set<string>();
 
   const allFieldIds = collectAllFieldIds(schema);
@@ -95,13 +105,20 @@ export function evaluateDependencies(
 
     for (const dep of depsToCheck) {
       try {
-        const condMet = evaluateConditions(dep, data, overrides, allFieldIds);
+        const condMet = evaluateConditions(dep, workingData, stateOverrides, allFieldIds);
         if (!condMet) continue;
 
         for (const action of dep.actions ?? []) {
-          const targets = resolveTargets(action, data, allFieldIds);
+          const targets = resolveTargets(action, workingData, allFieldIds);
           for (const target of targets) {
-            applyAction(action, target, data, overrides, allFieldIds);
+            if (action.property === "value") {
+              // Compute the new value and update workingData for cascading
+              const val = resolveActionValue(action, workingData, stateOverrides);
+              dataOverrides[target] = val;
+              workingData = { ...workingData, [target]: val };
+            } else {
+              applyAction(action, target, workingData, stateOverrides, allFieldIds);
+            }
             affectedFields.add(target.split(".")[0]); // top-level field
           }
         }
@@ -119,7 +136,7 @@ export function evaluateDependencies(
   }
 
   recurse(changedFieldId, 0);
-  return overrides;
+  return { stateOverrides, dataOverrides };
 }
 
 // ---------------------------------------------------------------------------
@@ -260,10 +277,8 @@ function applyAction(
 ): void {
   const property = action.property;
 
-  if (property === "value") {
-    // Value changes are not tracked in FieldState — engine handles data separately
-    return;
-  }
+  // "value" is handled by the caller (stored in dataOverrides)
+  if (property === "value") return;
 
   const stateProps: (keyof FieldState)[] = ["hidden", "disabled", "readonly", "required"];
   if (!stateProps.includes(property as keyof FieldState)) {
@@ -306,7 +321,9 @@ function resolveActionValue(
 
     case "logic": {
       const ctx = buildEvaluationContext(data);
-      return isTruthy(applyJsonLogic(vr.value, ctx));
+      // Return raw computed value — callers wrap in Boolean() for state props,
+      // or store as-is for value props.
+      return applyJsonLogic(vr.value, ctx);
     }
 
     case "list":

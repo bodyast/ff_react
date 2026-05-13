@@ -359,11 +359,17 @@ type EvaluateDependenciesParams = {
     /** Existing states to start from (updated in place, returned as new object) */
     currentStates?: Record<string, Partial<FieldState>>;
 };
+type EvaluateDependenciesResult = {
+    /** FieldState overrides: hidden / disabled / readonly / required */
+    stateOverrides: Record<string, Partial<FieldState>>;
+    /** Computed value overrides: fieldId → new value */
+    dataOverrides: Record<string, unknown>;
+};
 /**
  * Full dependency evaluation with JSON Logic, wildcards, and cascading.
- * Returns fieldId → FieldState overrides.
+ * Returns both FieldState overrides and computed data (value) overrides.
  */
-declare function evaluateDependencies(params: EvaluateDependenciesParams): Record<string, Partial<FieldState>>;
+declare function evaluateDependencies(params: EvaluateDependenciesParams): EvaluateDependenciesResult;
 
 type ValidateFormParams = {
     schema: FormStructure;

@@ -298,11 +298,13 @@ function buildEvaluationContext(data) {
   return toLogicObject(data);
 }
 function evaluateDependencies(params) {
-  const { schema, data, changedFieldId } = params;
-  if (!schema.dependencies?.length) return {};
-  const overrides = {
+  const { schema, data: initialData, changedFieldId } = params;
+  if (!schema.dependencies?.length) return { stateOverrides: {}, dataOverrides: {} };
+  const stateOverrides = {
     ...params.currentStates ?? {}
   };
+  const dataOverrides = {};
+  let workingData = initialData;
   const processed = /* @__PURE__ */ new Set();
   const allFieldIds = collectAllFieldIds(schema);
   function recurse(fieldId, depth) {
@@ -314,12 +316,18 @@ function evaluateDependencies(params) {
     const affectedFields = /* @__PURE__ */ new Set();
     for (const dep of depsToCheck) {
       try {
-        const condMet = evaluateConditions(dep, data, overrides, allFieldIds);
+        const condMet = evaluateConditions(dep, workingData, stateOverrides, allFieldIds);
         if (!condMet) continue;
         for (const action of dep.actions ?? []) {
-          const targets = resolveTargets(action, data, allFieldIds);
+          const targets = resolveTargets(action, workingData, allFieldIds);
           for (const target of targets) {
-            applyAction(action, target, data, overrides, allFieldIds);
+            if (action.property === "value") {
+              const val = resolveActionValue(action, workingData, stateOverrides);
+              dataOverrides[target] = val;
+              workingData = { ...workingData, [target]: val };
+            } else {
+              applyAction(action, target, workingData, stateOverrides, allFieldIds);
+            }
             affectedFields.add(target.split(".")[0]);
           }
         }
@@ -334,7 +342,7 @@ function evaluateDependencies(params) {
     }
   }
   recurse(changedFieldId, 0);
-  return overrides;
+  return { stateOverrides, dataOverrides };
 }
 function evaluateConditions(dep, data, _overrides, allFieldIds) {
   const conditions = [
@@ -414,9 +422,7 @@ function resolveTargets(action, data, allFieldIds) {
 }
 function applyAction(action, target, data, _overrides, _allFieldIds) {
   const property = action.property;
-  if (property === "value") {
-    return;
-  }
+  if (property === "value") return;
   const stateProps = ["hidden", "disabled", "readonly", "required"];
   if (!stateProps.includes(property)) {
     if (isDev) {
@@ -446,7 +452,7 @@ function resolveActionValue(action, data, overrides) {
     }
     case "logic": {
       const ctx = buildEvaluationContext(data);
-      return isTruthy(applyJsonLogic(vr.value, ctx));
+      return applyJsonLogic(vr.value, ctx);
     }
     case "list":
       return vr.value;
@@ -580,7 +586,11 @@ function createFormEngine(params) {
     listeners.forEach((l) => l());
   }
   function recompute() {
-    fieldStates = computeStates(schema, data);
+    const { stateOverrides, dataOverrides } = evaluateDependencies({ schema, data });
+    if (Object.keys(dataOverrides).length > 0) {
+      data = { ...data, ...dataOverrides };
+    }
+    fieldStates = buildFieldStates(schema, stateOverrides);
   }
   return {
     changeField(fieldId, value) {
@@ -614,29 +624,32 @@ function createFormEngine(params) {
     }
   };
 }
-function computeStates(schema, data) {
-  const overrides = evaluateDependencies({ schema, data });
+function buildFieldStates(schema, stateOverrides) {
   const states = {};
   for (const page of schema.pages) {
     for (const section of page.sections) {
       for (const field of section.fields) {
-        const schema_state = {
+        const schemaState = {
           hidden: Boolean(field.settings?.hidden),
           disabled: Boolean(field.settings?.disabled),
           readonly: Boolean(field.settings?.readonly),
           required: Boolean(field.settings?.required)
         };
-        const ov = overrides[field.id] ?? {};
+        const ov = stateOverrides[field.id] ?? {};
         states[field.id] = {
-          hidden: ov.hidden ?? schema_state.hidden,
-          disabled: ov.disabled ?? schema_state.disabled,
-          readonly: ov.readonly ?? schema_state.readonly,
-          required: ov.required ?? schema_state.required
+          hidden: ov.hidden ?? schemaState.hidden,
+          disabled: ov.disabled ?? schemaState.disabled,
+          readonly: ov.readonly ?? schemaState.readonly,
+          required: ov.required ?? schemaState.required
         };
       }
     }
   }
   return states;
+}
+function computeStates(schema, data) {
+  const { stateOverrides } = evaluateDependencies({ schema, data });
+  return buildFieldStates(schema, stateOverrides);
 }
 
 // src/api/client.ts
