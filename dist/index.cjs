@@ -90,6 +90,15 @@ function _apply(rule, data) {
         if (cur === null || cur === void 0) return a[1] ?? null;
         cur = cur[part];
       }
+      if ((cur === null || cur === void 0) && String(path).endsWith(".value")) {
+        const shorterPath = String(path).slice(0, -6);
+        let cur2 = data;
+        for (const part of shorterPath.split(".")) {
+          if (cur2 === null || cur2 === void 0) return a[1] ?? null;
+          cur2 = cur2[part];
+        }
+        return cur2 ?? a[1] ?? null;
+      }
       return cur ?? a[1] ?? null;
     }
     // -----------------------------------------------------------------------
@@ -274,6 +283,20 @@ function isTruthy(value) {
 // src/core/dependencies.ts
 var isDev = typeof globalThis !== "undefined" && globalThis["process"] !== void 0 ? globalThis["process"]?.env?.NODE_ENV !== "production" : true;
 var MAX_DEPTH = 10;
+function toLogicObject(v) {
+  if (Array.isArray(v)) return v.map(toLogicObject);
+  if (v !== null && typeof v === "object") {
+    const result = {};
+    for (const [k, val] of Object.entries(v)) {
+      result[k] = toLogicObject(val);
+    }
+    return result;
+  }
+  return { value: v };
+}
+function buildEvaluationContext(data) {
+  return toLogicObject(data);
+}
 function evaluateDependencies(params) {
   const { schema, data, changedFieldId } = params;
   if (!schema.dependencies?.length) return {};
@@ -330,7 +353,8 @@ function evaluateConditions(dep, data, _overrides, allFieldIds) {
 }
 function evaluateSingleCondition(condition, data, _overrides, _allFieldIds) {
   if (condition.type === "logic" || condition.value && typeof condition.value === "object") {
-    const result = applyJsonLogic(condition.value, data);
+    const ctx = buildEvaluationContext(data);
+    const result = applyJsonLogic(condition.value, ctx);
     return isTruthy(result);
   }
   if (condition.type === "field" && condition.field) {
@@ -343,7 +367,8 @@ function evaluateSingleCondition(condition, data, _overrides, _allFieldIds) {
     return evaluateLegacyOperator(condition.operator, fieldVal, condition.value);
   }
   if (condition.value !== void 0) {
-    const result = applyJsonLogic(condition.value, data);
+    const ctx = buildEvaluationContext(data);
+    const result = applyJsonLogic(condition.value, ctx);
     return isTruthy(result);
   }
   return true;
@@ -419,8 +444,10 @@ function resolveActionValue(action, data, overrides) {
       if (sourceProp === "value") return data[sourceId];
       return overrides[sourceId]?.[sourceProp];
     }
-    case "logic":
-      return isTruthy(applyJsonLogic(vr.value, data));
+    case "logic": {
+      const ctx = buildEvaluationContext(data);
+      return isTruthy(applyJsonLogic(vr.value, ctx));
+    }
     case "list":
       return vr.value;
     default:
@@ -742,6 +769,7 @@ function useFFForm(props) {
     formVersionUuid,
     submissionId,
     schema: schemaProp,
+    formData,
     initialData,
     mode = "create",
     autoLoad = true,
@@ -771,7 +799,15 @@ function useFFForm(props) {
       } else {
         throw new Error("Provide `schema` prop or `formId`");
       }
-      let submissionData = initialData ?? {};
+      let submissionData = {};
+      if (formData) {
+        const isSubmission = formData !== null && typeof formData === "object" && "data" in formData;
+        const nested = isSubmission ? formData.data : void 0;
+        submissionData = nested ? { ...nested } : { ...formData };
+      }
+      if (initialData) {
+        submissionData = { ...submissionData, ...initialData };
+      }
       if ((mode === "edit" || mode === "readonly") && submissionId) {
         const sub = await adapter.fetchSubmission({ apiBaseUrl, apiKey: key, submissionId });
         submissionData = { ...submissionData, ...sub.data ?? {} };
@@ -784,7 +820,7 @@ function useFFForm(props) {
       dispatch({ type: "LOAD_ERROR", error });
       onLoadError?.(error);
     }
-  }, [adapter, apiBaseUrl, formId, formVersionUuid, getKey, initialData, mode, onLoadError, schemaProp, submissionId]);
+  }, [adapter, apiBaseUrl, formData, formId, formVersionUuid, getKey, initialData, mode, onLoadError, schemaProp, submissionId]);
   (0, import_react.useEffect)(() => {
     const engine = engineRef.current;
     if (!engine) return;
@@ -1401,6 +1437,25 @@ function MediaField({
 // src/react/fields/SubFormField.tsx
 var import_react4 = require("react");
 var import_jsx_runtime9 = require("react/jsx-runtime");
+function isNormalized(entry) {
+  return entry !== null && typeof entry === "object" && !Array.isArray(entry) && "data" in entry && "form_version_uuid" in entry;
+}
+function entryData(entry) {
+  return isNormalized(entry) ? entry.data : entry;
+}
+function patchEntry(entry, fieldId, val) {
+  if (isNormalized(entry)) {
+    return { ...entry, data: { ...entry.data, [fieldId]: val } };
+  }
+  return { ...entry, [fieldId]: val };
+}
+function newEntry(subformUuid, existingEntries) {
+  const useNormalized = existingEntries.length === 0 || isNormalized(existingEntries[0]);
+  if (useNormalized) {
+    return { form_version_uuid: subformUuid, submitted_at: null, data: {} };
+  }
+  return {};
+}
 function SubFormField({
   field,
   value,
@@ -1408,34 +1463,58 @@ function SubFormField({
   readonly,
   onChange,
   parentSchema,
-  fieldStates = {},
   validationErrors = {},
   uploadMediaForField,
-  deleteMediaItem
+  deleteMedia,
+  renderers
 }) {
   const settings = field.settings ?? {};
-  const allowMany = Boolean(settings.allowMany ?? settings.isMultiple);
-  const textAdd = settings.textAdd ?? `+ Add ${field.label ?? field.title ?? "entry"}`;
-  const textRemove = settings.textRemove ?? "Remove";
+  const allowMany = Boolean(settings.allowMany ?? settings.allow_many ?? settings.isMultiple);
+  const textAdd = settings.textAdd ?? settings.text_add ?? `+ Add ${field.label ?? field.title ?? "entry"}`;
+  const textRemove = settings.textRemove ?? settings.text_remove ?? "Remove";
   const subformKey = settings.id;
   const subformSchema = subformKey && parentSchema?.subforms ? parentSchema.subforms[subformKey] : void 0;
-  const entries = allowMany ? Array.isArray(value) ? value : [] : value && typeof value === "object" && !Array.isArray(value) ? [value] : [{}];
+  console.log("[SubFormField]", {
+    fieldId: field.id,
+    fieldLabel: field.label,
+    settings,
+    allowMany,
+    subformKey,
+    hasParentSchema: !!parentSchema,
+    hasSubforms: !!parentSchema?.subforms,
+    subformSchemaFound: !!subformSchema,
+    valueType: Array.isArray(value) ? `array[${value.length}]` : typeof value
+  });
+  const rawEntries = (0, import_react4.useMemo)(() => {
+    if (allowMany) {
+      return Array.isArray(value) ? value : [];
+    }
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return [value];
+    }
+    return [{ form_version_uuid: subformSchema?.uuid ?? "", submitted_at: null, data: {} }];
+  }, [allowMany, value, subformSchema?.uuid]);
+  const entryFieldStates = (0, import_react4.useMemo)(() => {
+    if (!subformSchema) return rawEntries.map(() => ({}));
+    return rawEntries.map((e) => computeStates(subformSchema, entryData(e)));
+  }, [subformSchema, rawEntries]);
   const [expandedEntries, setExpandedEntries] = (0, import_react4.useState)(
-    () => new Set(entries.length > 0 ? [0] : [])
+    () => new Set(rawEntries.length > 0 ? [0] : [])
   );
   function updateEntry(index, fieldId, val) {
-    const next = entries.map(
-      (e, i) => i === index ? { ...e, [fieldId]: val } : e
+    const next = rawEntries.map(
+      (e, i) => i === index ? patchEntry(e, fieldId, val) : e
     );
     emit(next);
   }
   function addEntry() {
-    const next = [...entries, {}];
+    const fresh = newEntry(subformSchema?.uuid ?? "", rawEntries);
+    const next = [...rawEntries, fresh];
     setExpandedEntries((prev) => /* @__PURE__ */ new Set([...prev, next.length - 1]));
     emit(next);
   }
   function removeEntry(index) {
-    const next = entries.filter((_, i) => i !== index);
+    const next = rawEntries.filter((_, i) => i !== index);
     setExpandedEntries((prev) => {
       const s = /* @__PURE__ */ new Set();
       prev.forEach((i) => {
@@ -1455,59 +1534,69 @@ function SubFormField({
   function emit(next) {
     onChange(allowMany ? next : next[0] ?? {});
   }
+  const safeUploadForField = uploadMediaForField ?? (() => Promise.resolve({ uuid: "" }));
+  const safeDeleteMedia = deleteMedia ?? (() => Promise.resolve());
+  function renderEntryHeader(idx, isOpen) {
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+      "button",
+      {
+        type: "button",
+        className: "ff-form__subform-header",
+        onClick: () => toggleEntry(idx),
+        "aria-expanded": isOpen,
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "ff-form__subform-header-title", children: [
+            field.label ?? field.title ?? "Entry",
+            allowMany ? ` ${idx + 1}` : ""
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "ff-form__subform-header-right", children: [
+            !readonly && !disabled && allowMany && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "span",
+              {
+                className: "ff-form__subform-remove",
+                role: "button",
+                tabIndex: 0,
+                onClick: (e) => {
+                  e.stopPropagation();
+                  removeEntry(idx);
+                },
+                onKeyDown: (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    removeEntry(idx);
+                  }
+                },
+                children: textRemove
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "ff-form__section-chevron", "aria-hidden": "true", children: isOpen ? "\u25B2" : "\u25BC" })
+          ] })
+        ]
+      }
+    );
+  }
   if (subformSchema) {
+    const mode = disabled || readonly ? "readonly" : "edit";
     return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "ff-form__subform", children: [
-      entries.map((entry, idx) => {
+      rawEntries.map((entry, idx) => {
         const isOpen = expandedEntries.has(idx);
+        const fieldData = entryData(entry);
+        const fieldStatesForEntry = entryFieldStates[idx] ?? {};
         return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "ff-form__subform-entry", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
-            "button",
-            {
-              type: "button",
-              className: "ff-form__subform-header",
-              onClick: () => toggleEntry(idx),
-              "aria-expanded": isOpen,
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "ff-form__subform-header-title", children: [
-                  field.label ?? field.title ?? "Entry",
-                  allowMany ? ` ${idx + 1}` : ""
-                ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "ff-form__subform-header-right", children: [
-                  !readonly && !disabled && allowMany && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
-                    "span",
-                    {
-                      className: "ff-form__subform-remove",
-                      role: "button",
-                      tabIndex: 0,
-                      onClick: (e) => {
-                        e.stopPropagation();
-                        removeEntry(idx);
-                      },
-                      onKeyDown: (e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.stopPropagation();
-                          removeEntry(idx);
-                        }
-                      },
-                      children: textRemove
-                    }
-                  ),
-                  /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "ff-form__section-chevron", "aria-hidden": "true", children: isOpen ? "\u25B2" : "\u25BC" })
-                ] })
-              ]
-            }
-          ),
+          renderEntryHeader(idx, isOpen),
           isOpen && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "ff-form__subform-body", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
             SectionAccordion,
             {
               sections: subformSchema.pages.flatMap((p) => p.sections),
-              data: entry,
-              fieldStates,
+              data: fieldData,
+              fieldStates: fieldStatesForEntry,
               validationErrors,
-              mode: disabled || readonly ? "readonly" : "edit",
+              mode,
+              renderers,
+              parentSchema: subformSchema,
               onFieldChange: (fId, val) => updateEntry(idx, fId, val),
-              uploadMediaForField: uploadMediaForField ?? ((_fId, _f) => Promise.resolve({ uuid: "" })),
-              deleteMediaItem: deleteMediaItem ?? ((_uuid) => Promise.resolve())
+              uploadMediaForField: safeUploadForField,
+              deleteMediaItem: safeDeleteMedia
             }
           ) })
         ] }, idx);
@@ -1524,47 +1613,12 @@ function SubFormField({
     ] });
   }
   return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "ff-form__subform", children: [
-    entries.map((entry, idx) => {
+    rawEntries.map((entry, idx) => {
       const isOpen = expandedEntries.has(idx);
+      const fieldData = entryData(entry);
       return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "ff-form__subform-entry", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
-          "button",
-          {
-            type: "button",
-            className: "ff-form__subform-header",
-            onClick: () => toggleEntry(idx),
-            "aria-expanded": isOpen,
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "ff-form__subform-header-title", children: [
-                field.label ?? field.title ?? "Entry",
-                allowMany ? ` ${idx + 1}` : ""
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "ff-form__subform-header-right", children: [
-                !readonly && !disabled && allowMany && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
-                  "span",
-                  {
-                    className: "ff-form__subform-remove",
-                    role: "button",
-                    tabIndex: 0,
-                    onClick: (e) => {
-                      e.stopPropagation();
-                      removeEntry(idx);
-                    },
-                    onKeyDown: (e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.stopPropagation();
-                        removeEntry(idx);
-                      }
-                    },
-                    children: textRemove
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "ff-form__section-chevron", "aria-hidden": "true", children: isOpen ? "\u25B2" : "\u25BC" })
-              ] })
-            ]
-          }
-        ),
-        isOpen && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "ff-form__subform-body", children: Object.entries(entry).map(([key, val]) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "ff-form__field", children: [
+        renderEntryHeader(idx, isOpen),
+        isOpen && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "ff-form__subform-body", children: Object.entries(fieldData).map(([key, val]) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "ff-form__field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("label", { className: "ff-form__label", children: key }),
           /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
             "input",
@@ -1809,11 +1863,9 @@ var DEFAULT_RENDERERS = {
   checkbox: CheckboxField,
   date: DateField,
   datetime: DateField,
-  // file / image / media all share the same renderer
   file: MediaField,
   image: MediaField,
   media: MediaField,
-  // new types
   choice: ChoiceField,
   placeholder: PlaceholderField,
   button: ButtonField,
@@ -1826,8 +1878,8 @@ function FallbackField({ field }) {
     /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("code", { children: field.type })
   ] });
 }
-function FieldRenderer({ renderers, ...props }) {
-  const { field } = props;
+function FieldRenderer(props) {
+  const { field, renderers } = props;
   const registry = {
     ...DEFAULT_RENDERERS,
     ...renderers
@@ -1846,6 +1898,7 @@ function SectionRenderer({
   validationErrors,
   mode,
   renderers,
+  parentSchema,
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem
@@ -1885,8 +1938,11 @@ function SectionRenderer({
               readonly: isReadonly,
               required: isRequired,
               renderers,
+              parentSchema,
+              validationErrors,
               onChange: (value) => onFieldChange(field.id, value),
               uploadMedia: (file) => uploadMediaForField(field.id, file),
+              uploadMediaForField,
               deleteMedia: deleteMediaItem
             }
           ),
@@ -1907,6 +1963,7 @@ function SectionAccordion({
   validationErrors,
   mode,
   renderers,
+  parentSchema,
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem
@@ -1969,14 +2026,7 @@ function SectionAccordion({
                       children: errors > 0 ? errors : missing
                     }
                   ),
-                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-                    "span",
-                    {
-                      className: "ff-form__section-chevron",
-                      "aria-hidden": "true",
-                      children: isOpen ? "\u25B2" : "\u25BC"
-                    }
-                  )
+                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "ff-form__section-chevron", "aria-hidden": "true", children: isOpen ? "\u25B2" : "\u25BC" })
                 ] })
               ]
             }
@@ -1992,6 +2042,7 @@ function SectionAccordion({
                 validationErrors,
                 mode,
                 renderers,
+                parentSchema,
                 onFieldChange,
                 uploadMediaForField,
                 deleteMediaItem
@@ -2016,6 +2067,7 @@ function PageDetailView({
   validationErrors,
   mode,
   renderers,
+  parentSchema,
   onBack,
   onPrev,
   onNext,
@@ -2052,6 +2104,7 @@ function PageDetailView({
         validationErrors,
         mode,
         renderers,
+        parentSchema,
         onFieldChange,
         uploadMediaForField,
         deleteMediaItem
@@ -2130,6 +2183,7 @@ function FFForm(props) {
     validationErrors,
     mode,
     renderers,
+    parentSchema: schema,
     onFieldChange: changeField,
     uploadMediaForField,
     deleteMediaItem

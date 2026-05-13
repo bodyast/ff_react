@@ -35,7 +35,7 @@ function reducer(state: FFFormState, action: Action): FFFormState {
 export function useFFForm(props: FFFormProps) {
   const {
     apiBaseUrl, apiKey, getApiKey, formId, formVersionUuid, submissionId,
-    schema: schemaProp, initialData, mode = "create", autoLoad = true,
+    schema: schemaProp, formData, initialData, mode = "create", autoLoad = true,
     apiAdapter, onChange, onDraftSubmit, onFinalSubmit, onSubmitSuccess, onSubmitError, onLoadError, onReady,
   } = props;
 
@@ -54,7 +54,18 @@ export function useFFForm(props: FFFormProps) {
       else if (formId) { schema = await adapter.fetchFormStructure({ apiBaseUrl, apiKey: key, formId }); }
       else { throw new Error("Provide `schema` prop or `formId`"); }
 
-      let submissionData: Record<string, unknown> = initialData ?? {};
+      // Resolve initial data — formData takes priority, initialData is a fallback
+      let submissionData: Record<string, unknown> = {};
+      if (formData) {
+        const isSubmission = formData !== null && typeof formData === "object" && "data" in formData;
+        const nested = isSubmission ? (formData as { data?: Record<string, unknown> }).data : undefined;
+        submissionData = nested ? { ...nested } : { ...(formData as Record<string, unknown>) };
+      }
+      if (initialData) {
+        // initialData overrides formData field-by-field
+        submissionData = { ...submissionData, ...initialData };
+      }
+
       if ((mode === "edit" || mode === "readonly") && submissionId) {
         const sub = await adapter.fetchSubmission({ apiBaseUrl, apiKey: key, submissionId });
         submissionData = { ...submissionData, ...(sub.data ?? {}) };
@@ -68,7 +79,7 @@ export function useFFForm(props: FFFormProps) {
       dispatch({ type: "LOAD_ERROR", error });
       onLoadError?.(error);
     }
-  }, [adapter, apiBaseUrl, formId, formVersionUuid, getKey, initialData, mode, onLoadError, schemaProp, submissionId]);
+  }, [adapter, apiBaseUrl, formData, formId, formVersionUuid, getKey, initialData, mode, onLoadError, schemaProp, submissionId]);
 
   // Subscribe to engine changes
   useEffect(() => {

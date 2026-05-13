@@ -1,4 +1,4 @@
-import type { FormPage, ValidationErrors, FieldState } from "../types/form";
+import type { FormPage, FormStructure, ValidationErrors, FieldState } from "../types/form";
 import type { FieldRenderers } from "../types/props";
 import { SectionAccordion } from "./SectionAccordion";
 
@@ -11,6 +11,7 @@ type PageDetailViewProps = {
   validationErrors: ValidationErrors;
   mode: "create" | "edit" | "readonly";
   renderers?: Partial<FieldRenderers>;
+  parentSchema?: FormStructure;
   onBack: () => void;
   onPrev?: () => void;
   onNext?: () => void;
@@ -28,6 +29,7 @@ export function PageDetailView({
   validationErrors,
   mode,
   renderers,
+  parentSchema,
   onBack,
   onPrev,
   onNext,
@@ -68,6 +70,7 @@ export function PageDetailView({
         validationErrors={validationErrors}
         mode={mode}
         renderers={renderers}
+        parentSchema={parentSchema}
         onFieldChange={onFieldChange}
         uploadMediaForField={uploadMediaForField}
         deleteMediaItem={deleteMediaItem}

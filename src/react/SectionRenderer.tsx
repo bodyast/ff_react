@@ -1,4 +1,4 @@
-import type { FormSection, ValidationErrors, FieldState } from "../types/form";
+import type { FormSection, FormStructure, ValidationErrors, FieldState } from "../types/form";
 import type { FieldRenderers } from "../types/props";
 import { FieldRenderer } from "./FieldRenderer";
 
@@ -9,6 +9,7 @@ type SectionRendererProps = {
   validationErrors: ValidationErrors;
   mode: "create" | "edit" | "readonly";
   renderers?: Partial<FieldRenderers>;
+  parentSchema?: FormStructure;
   onFieldChange: (fieldId: string, value: unknown) => void;
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
@@ -21,6 +22,7 @@ export function SectionRenderer({
   validationErrors,
   mode,
   renderers,
+  parentSchema,
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
@@ -40,7 +42,6 @@ export function SectionRenderer({
         const isRequired = state?.required ?? false;
         const errors = validationErrors[field.id];
 
-        // placeholder and button fields don't show the label wrapper
         const isLabelless =
           field.type === "placeholder" || field.type === "button";
 
@@ -78,8 +79,11 @@ export function SectionRenderer({
               readonly={isReadonly}
               required={isRequired}
               renderers={renderers}
+              parentSchema={parentSchema}
+              validationErrors={validationErrors}
               onChange={(value) => onFieldChange(field.id, value)}
               uploadMedia={(file) => uploadMediaForField(field.id, file)}
+              uploadMediaForField={uploadMediaForField}
               deleteMedia={deleteMediaItem}
             />
 

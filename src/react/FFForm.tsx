@@ -85,6 +85,7 @@ export function FFForm(props: FFFormProps) {
     validationErrors,
     mode,
     renderers,
+    parentSchema: schema,
     onFieldChange: changeField,
     uploadMediaForField,
     deleteMediaItem,

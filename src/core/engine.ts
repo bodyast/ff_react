@@ -43,7 +43,8 @@ export function createFormEngine(params: FormEngineParams): FormEngine {
   };
 }
 
-function computeStates(schema: FormStructure, data: Record<string, unknown>): Record<string, FieldState> {
+/** Exported so SubFormField and other composite components can compute field states */
+export function computeStates(schema: FormStructure, data: Record<string, unknown>): Record<string, FieldState> {
   const overrides = evaluateDependencies({ schema, data });
   const states: Record<string, FieldState> = {};
   for (const page of schema.pages) {

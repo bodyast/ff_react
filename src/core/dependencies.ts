@@ -17,6 +17,40 @@ const isDev =
 const MAX_DEPTH = 10;
 
 // ---------------------------------------------------------------------------
+// Flutter-compatible evaluation context
+// ---------------------------------------------------------------------------
+
+/**
+ * Mirrors Flutter's `_toLogicObject` / `_createEvaluationContext`.
+ *
+ * Rules:
+ *  - Scalars (string, number, bool, null) → { value: v }
+ *  - Arrays → each element is recursively processed
+ *  - Objects (Maps) → each value is recursively processed
+ *
+ * This means JSON Logic conditions from the backend work identically in React
+ * and Flutter:
+ *   {"var": "field_id.value"} → actual field value
+ *   {"var": "field_id"}       → {value: actualValue} (truthy when value exists)
+ *   {"var": "donors.0.data.first_name.value"} → string value in a subform entry
+ */
+function toLogicObject(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(toLogicObject);
+  if (v !== null && typeof v === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      result[k] = toLogicObject(val);
+    }
+    return result;
+  }
+  return { value: v };
+}
+
+function buildEvaluationContext(data: Record<string, unknown>): Record<string, unknown> {
+  return toLogicObject(data) as Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -124,9 +158,10 @@ function evaluateSingleCondition(
   _overrides: Record<string, Partial<FieldState>>,
   _allFieldIds: string[]
 ): boolean {
-  // JSON Logic condition
+  // JSON Logic condition — use Flutter-compatible wrapped context
   if (condition.type === "logic" || (condition.value && typeof condition.value === "object")) {
-    const result = applyJsonLogic(condition.value, data);
+    const ctx = buildEvaluationContext(data);
+    const result = applyJsonLogic(condition.value, ctx);
     return isTruthy(result);
   }
 
@@ -145,7 +180,8 @@ function evaluateSingleCondition(
 
   // Bare value — treat as JSON Logic
   if (condition.value !== undefined) {
-    const result = applyJsonLogic(condition.value, data);
+    const ctx = buildEvaluationContext(data);
+    const result = applyJsonLogic(condition.value, ctx);
     return isTruthy(result);
   }
 
@@ -268,8 +304,10 @@ function resolveActionValue(
       return (overrides[sourceId] as Record<string, unknown> | undefined)?.[sourceProp];
     }
 
-    case "logic":
-      return isTruthy(applyJsonLogic(vr.value, data));
+    case "logic": {
+      const ctx = buildEvaluationContext(data);
+      return isTruthy(applyJsonLogic(vr.value, ctx));
+    }
 
     case "list":
       // Lookup list mapping — return raw; consumer resolves

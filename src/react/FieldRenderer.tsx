@@ -26,11 +26,9 @@ const DEFAULT_RENDERERS: FieldRenderers = {
   checkbox: CheckboxField,
   date: DateField,
   datetime: DateField,
-  // file / image / media all share the same renderer
   file: MediaField,
   image: MediaField,
   media: MediaField,
-  // new types
   choice: ChoiceField,
   placeholder: PlaceholderField,
   button: ButtonField,
@@ -52,14 +50,12 @@ function FallbackField({ field }: { field: FormField }) {
 
 // ---------------------------------------------------------------------------
 // Main dispatcher
+// `renderers` is already part of FieldRendererProps so it flows through to
+// components that need it (e.g. SubFormField for its nested accordion).
 // ---------------------------------------------------------------------------
 
-type FieldRendererOuterProps = FieldRendererProps & {
-  renderers?: Partial<FieldRenderers>;
-};
-
-export function FieldRenderer({ renderers, ...props }: FieldRendererOuterProps) {
-  const { field } = props;
+export function FieldRenderer(props: FieldRendererProps) {
+  const { field, renderers } = props;
   const registry: FieldRenderers = {
     ...DEFAULT_RENDERERS,
     ...(renderers as FieldRenderers),

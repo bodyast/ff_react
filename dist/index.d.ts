@@ -228,6 +228,7 @@ type ApiAdapter = ApiAdapterConfig & {
 };
 type ResolvedApiAdapter = Required<Omit<ApiAdapter, "fetchFn" | "requestInit" | "proxyPath">>;
 
+type FieldRenderers = Record<string, React.ComponentType<FieldRendererProps>>;
 type FieldRendererProps = {
     field: FormField;
     value: unknown;
@@ -236,12 +237,22 @@ type FieldRendererProps = {
     readonly: boolean;
     required: boolean;
     onChange: (value: unknown) => void;
+    /** Upload media for THIS field (file only, no fieldId needed) */
     uploadMedia?: (file: File) => Promise<{
         uuid: string;
     }>;
+    /** Upload media for a CHILD field (used by subforms) */
+    uploadMediaForField?: (fieldId: string, file: File) => Promise<{
+        uuid: string;
+    }>;
     deleteMedia?: (mediaUuid: string) => Promise<void>;
+    /** Parent form schema — allows subform fields to resolve their nested schema */
+    parentSchema?: FormStructure;
+    /** Full validation errors map — used by subforms to show nested field errors */
+    validationErrors?: ValidationErrors;
+    /** Custom field renderers, threaded through for nested subforms */
+    renderers?: Partial<FieldRenderers>;
 };
-type FieldRenderers = Record<string, React.ComponentType<FieldRendererProps>>;
 type FFFormContextValue = {
     data: Record<string, unknown>;
     fieldStates: Record<string, FieldState>;
@@ -260,17 +271,25 @@ type FFFormProps = {
     formId?: string;
     formVersionUuid?: string;
     submissionId?: string;
+    /** Pre-built schema — skips API fetch */
     schema?: FormStructure;
+    /**
+     * Pre-populated form field values.
+     * Accepts either a plain `{ fieldId: value }` map or a full `FormSubmission`
+     * (with a `.data` property). Equivalent to Flutter's `formData` parameter.
+     */
+    formData?: FormSubmission | Record<string, unknown>;
+    /** @deprecated Prefer `formData`. Initial field values for create mode. */
     initialData?: Record<string, unknown>;
     mode?: "create" | "edit" | "readonly";
     autoLoad?: boolean;
     autoSave?: boolean;
     submitButtonText?: string;
     saveDraftButtonText?: string;
-    apiAdapter?: ApiAdapter;
-    renderers?: Partial<FieldRenderers>;
     className?: string;
     style?: React.CSSProperties;
+    apiAdapter?: ApiAdapter;
+    renderers?: Partial<FieldRenderers>;
     onReady?: (ctx: FFFormContextValue) => void;
     onChange?: (data: Record<string, unknown>) => void;
     onDraftSubmit?: (payload: FormSubmissionPayload) => void | Promise<void>;

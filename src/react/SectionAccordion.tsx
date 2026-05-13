@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FormSection, ValidationErrors, FieldState } from "../types/form";
+import type { FormSection, FormStructure, ValidationErrors, FieldState } from "../types/form";
 import type { FieldRenderers } from "../types/props";
 import { SectionRenderer } from "./SectionRenderer";
 
@@ -10,6 +10,7 @@ type SectionAccordionProps = {
   validationErrors: ValidationErrors;
   mode: "create" | "edit" | "readonly";
   renderers?: Partial<FieldRenderers>;
+  parentSchema?: FormStructure;
   onFieldChange: (fieldId: string, value: unknown) => void;
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
@@ -22,6 +23,7 @@ export function SectionAccordion({
   validationErrors,
   mode,
   renderers,
+  parentSchema,
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
@@ -99,10 +101,7 @@ export function SectionAccordion({
                     {errors > 0 ? errors : missing}
                   </span>
                 )}
-                <span
-                  className="ff-form__section-chevron"
-                  aria-hidden="true"
-                >
+                <span className="ff-form__section-chevron" aria-hidden="true">
                   {isOpen ? "▲" : "▼"}
                 </span>
               </span>
@@ -122,6 +121,7 @@ export function SectionAccordion({
                   validationErrors={validationErrors}
                   mode={mode}
                   renderers={renderers}
+                  parentSchema={parentSchema}
                   onFieldChange={onFieldChange}
                   uploadMediaForField={uploadMediaForField}
                   deleteMediaItem={deleteMediaItem}

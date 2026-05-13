@@ -47,6 +47,18 @@ function _apply(rule: Rule, data: Data): unknown {
         if (cur === null || cur === undefined) return a[1] ?? null;
         cur = (cur as Record<string, unknown>)[part];
       }
+      // Flutter backend wraps field values as {value: actual}.
+      // If the condition uses {"var": "field_id.value"} but our data is flat
+      // (field_id → actualValue), fall back to the shorter path.
+      if ((cur === null || cur === undefined) && String(path).endsWith(".value")) {
+        const shorterPath = String(path).slice(0, -6); // strip ".value"
+        let cur2: unknown = data;
+        for (const part of shorterPath.split(".")) {
+          if (cur2 === null || cur2 === undefined) return a[1] ?? null;
+          cur2 = (cur2 as Record<string, unknown>)[part];
+        }
+        return cur2 ?? a[1] ?? null;
+      }
       return cur ?? a[1] ?? null;
     }
 
