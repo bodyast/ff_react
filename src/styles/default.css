@@ -165,7 +165,8 @@ select[multiple].ff-form__select { background-image: none; padding-right: .75rem
 .ff-form__checkbox-label {
   display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .9375rem;
 }
-.ff-form__checkbox { width: 1rem; height: 1rem; accent-color: #3b82f6; cursor: pointer; }
+.ff-form__checkbox,
+.ff-form__radio { width: 1rem; height: 1rem; accent-color: #3b82f6; cursor: pointer; }
 .ff-form__checkbox-text { }
 
 /* -------------------------------------------------------------------------- Switch */

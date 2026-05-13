@@ -42,9 +42,11 @@ export function CheckboxField({
   }
 
   // ---------------------------------------------------------------------------
-  // Multiple checkboxes from options list
+  // Options list (Flutter always renders all options regardless of isMultiple).
+  // isMultiple = true  → multi-select (checkbox inputs, array value)
+  // isMultiple = false → single-select (radio inputs, scalar value)
   // ---------------------------------------------------------------------------
-  if (isMultiple && options.length > 0) {
+  if (options.length > 0) {
     const selected: (string | number)[] = Array.isArray(value)
       ? (value as (string | number)[])
       : value !== undefined && value !== null
@@ -54,11 +56,16 @@ export function CheckboxField({
     function toggle(optVal: string | number) {
       if (disabled || readonly) return;
       const idx = selected.findIndex((v) => String(v) === String(optVal));
-      const next =
-        idx === -1
-          ? [...selected, optVal]
-          : selected.filter((v) => String(v) !== String(optVal));
-      onChange(next);
+      if (isMultiple) {
+        const next =
+          idx === -1
+            ? [...selected, optVal]
+            : selected.filter((v) => String(v) !== String(optVal));
+        onChange(next);
+      } else {
+        // Radio-like: select one at a time; tap again to deselect
+        onChange(idx === -1 ? optVal : undefined);
+      }
     }
 
     return (
@@ -70,8 +77,9 @@ export function CheckboxField({
             <label key={String(opt.value)} className="ff-form__checkbox-label" htmlFor={id}>
               <input
                 id={id}
-                type="checkbox"
-                className="ff-form__checkbox"
+                type={isMultiple ? "checkbox" : "radio"}
+                name={isMultiple ? undefined : field.id}
+                className={isMultiple ? "ff-form__checkbox" : "ff-form__radio"}
                 checked={checked}
                 disabled={disabled || readonly || Boolean(opt.disabled)}
                 onChange={() => toggle(opt.value)}
@@ -85,7 +93,7 @@ export function CheckboxField({
   }
 
   // ---------------------------------------------------------------------------
-  // Single checkbox
+  // No options — bare boolean toggle
   // ---------------------------------------------------------------------------
   return (
     <label className="ff-form__checkbox-label" htmlFor={field.id}>

@@ -1293,12 +1293,16 @@ function CheckboxField({
       settings.label !== false && (field.label ?? field.title) && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "ff-form__switch-text", children: field.label ?? field.title })
     ] });
   }
-  if (isMultiple && options.length > 0) {
+  if (options.length > 0) {
     let toggle2 = function(optVal) {
       if (disabled || readonly) return;
       const idx = selected.findIndex((v) => String(v) === String(optVal));
-      const next = idx === -1 ? [...selected, optVal] : selected.filter((v) => String(v) !== String(optVal));
-      onChange(next);
+      if (isMultiple) {
+        const next = idx === -1 ? [...selected, optVal] : selected.filter((v) => String(v) !== String(optVal));
+        onChange(next);
+      } else {
+        onChange(idx === -1 ? optVal : void 0);
+      }
     };
     var toggle = toggle2;
     const selected = Array.isArray(value) ? value : value !== void 0 && value !== null ? [value] : [];
@@ -1310,8 +1314,9 @@ function CheckboxField({
           "input",
           {
             id,
-            type: "checkbox",
-            className: "ff-form__checkbox",
+            type: isMultiple ? "checkbox" : "radio",
+            name: isMultiple ? void 0 : field.id,
+            className: isMultiple ? "ff-form__checkbox" : "ff-form__radio",
             checked,
             disabled: disabled || readonly || Boolean(opt.disabled),
             onChange: () => toggle2(opt.value)
