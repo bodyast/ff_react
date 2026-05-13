@@ -12,7 +12,7 @@ type SectionAccordionProps = {
   renderers?: Partial<FieldRenderers>;
   parentSchema?: FormStructure;
   onFieldChange: (fieldId: string, value: unknown) => void;
-  uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid: string }>;
+  uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
 };
 

@@ -174,7 +174,7 @@ export function SubFormField({
 
   // Fallback handlers so nested media fields don't crash when not provided
   const safeUploadForField =
-    uploadMediaForField ?? (() => Promise.resolve({ uuid: "" }));
+    uploadMediaForField ?? (() => Promise.resolve({ uuid: "" as string }));
   const safeDeleteMedia = deleteMedia ?? (() => Promise.resolve());
 
   // ---------------------------------------------------------------------------

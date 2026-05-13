@@ -25,9 +25,9 @@ export type FieldRendererProps = {
   onChange: (value: unknown) => void;
 
   /** Upload media for THIS field (file only, no fieldId needed) */
-  uploadMedia?: (file: File) => Promise<{ uuid: string }>;
+  uploadMedia?: (file: File) => Promise<{ uuid?: string; url?: string }>;
   /** Upload media for a CHILD field (used by subforms) */
-  uploadMediaForField?: (fieldId: string, file: File) => Promise<{ uuid: string }>;
+  uploadMediaForField?: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMedia?: (mediaUuid: string) => Promise<void>;
 
   /** Parent form schema — allows subform fields to resolve their nested schema */
@@ -99,9 +99,22 @@ export type FFFormProps = {
   // Callbacks
   onReady?: (ctx: FFFormContextValue) => void;
   onChange?: (data: Record<string, unknown>) => void;
+  /**
+   * Called on form submit instead of sending to the API.
+   * Receives the full payload (data + metadata). Return value is passed to onSubmitSuccess.
+   * When set, the built-in API submit call is skipped entirely.
+   */
+  onSubmit?: (payload: FormSubmissionPayload) => unknown | Promise<unknown>;
+  /** @deprecated Use onSubmit. Called before the API submit for draft saves. */
   onDraftSubmit?: (payload: FormSubmissionPayload) => void | Promise<void>;
+  /** @deprecated Use onSubmit. Called before the API submit for final submissions. */
   onFinalSubmit?: (payload: FormSubmissionPayload) => void | Promise<void>;
   onSubmitSuccess?: (result: unknown) => void;
   onSubmitError?: (error: unknown) => void;
   onLoadError?: (error: unknown) => void;
+  /**
+   * Custom media upload handler. When provided, called instead of the built-in API upload.
+   * Return { uuid } if you have a backend UUID, or { url } if you only have a direct link.
+   */
+  onUploadMedia?: (file: File, fieldId: string) => Promise<{ uuid?: string; url?: string }>;
 };

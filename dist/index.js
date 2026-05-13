@@ -780,12 +780,14 @@ function useFFForm(props) {
     autoLoad = true,
     apiAdapter,
     onChange,
+    onSubmit,
     onDraftSubmit,
     onFinalSubmit,
     onSubmitSuccess,
     onSubmitError,
     onLoadError,
-    onReady
+    onReady,
+    onUploadMedia
   } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
   const engineRef = useRef(null);
@@ -874,15 +876,20 @@ function useFFForm(props) {
     }
     const payload = engine.buildPayload({ isFinal });
     try {
-      if (isFinal) await onFinalSubmit?.(payload);
-      else await onDraftSubmit?.(payload);
-      const key = await getKey();
-      const result = await adapter.submitForm({ apiBaseUrl, apiKey: key, payload, isFinal });
-      onSubmitSuccess?.(result);
+      if (onSubmit) {
+        const result = await onSubmit(payload);
+        onSubmitSuccess?.(result ?? payload);
+      } else {
+        if (isFinal) await onFinalSubmit?.(payload);
+        else await onDraftSubmit?.(payload);
+        const key = await getKey();
+        const result = await adapter.submitForm({ apiBaseUrl, apiKey: key, payload, isFinal });
+        onSubmitSuccess?.(result);
+      }
     } catch (err) {
       onSubmitError?.(err);
     }
-  }, [adapter, apiBaseUrl, getKey, onDraftSubmit, onFinalSubmit, onSubmitError, onSubmitSuccess]);
+  }, [adapter, apiBaseUrl, getKey, onSubmit, onDraftSubmit, onFinalSubmit, onSubmitError, onSubmitSuccess]);
   const submitDraft = useCallback(() => doSubmit(false), [doSubmit]);
   const submitFinal = useCallback(() => doSubmit(true), [doSubmit]);
   const reset = useCallback(() => {
@@ -891,9 +898,12 @@ function useFFForm(props) {
   }, []);
   const reload = useCallback(() => load(), [load]);
   const uploadMediaForField = useCallback(async (fieldId, file) => {
+    if (onUploadMedia) {
+      return onUploadMedia(file, fieldId);
+    }
     const key = await getKey();
     return adapter.uploadMedia({ apiBaseUrl, apiKey: key, submissionId, fieldId, file });
-  }, [adapter, apiBaseUrl, getKey, submissionId]);
+  }, [adapter, apiBaseUrl, getKey, onUploadMedia, submissionId]);
   const deleteMediaItem = useCallback(async (mediaUuid) => {
     const key = await getKey();
     return adapter.deleteMedia({ apiBaseUrl, apiKey: key, submissionId, mediaUuid });
@@ -1366,9 +1376,10 @@ function MediaField({
       if (maxFiles !== void 0 && newEntries.length >= maxFiles) break;
       try {
         const result = await uploadMedia(file);
-        const objectUrl = URL.createObjectURL(file);
-        objectUrlsRef.current.push(objectUrl);
-        newEntries.push({ uuid: result.uuid, name: file.name, url: objectUrl });
+        const mediaId = result.uuid ?? result.url ?? "";
+        const objectUrl = result.url ?? URL.createObjectURL(file);
+        if (!result.url) objectUrlsRef.current.push(objectUrl);
+        newEntries.push({ uuid: mediaId, name: file.name, url: objectUrl });
       } catch (err) {
         errors.push(`Failed to upload "${file.name}": ${err instanceof Error ? err.message : "unknown error"}`);
       }

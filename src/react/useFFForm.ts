@@ -36,7 +36,8 @@ export function useFFForm(props: FFFormProps) {
   const {
     apiBaseUrl, apiKey, getApiKey, formId, formVersionUuid, submissionId,
     schema: schemaProp, formData, initialData, mode = "create", autoLoad = true,
-    apiAdapter, onChange, onDraftSubmit, onFinalSubmit, onSubmitSuccess, onSubmitError, onLoadError, onReady,
+    apiAdapter, onChange, onSubmit, onDraftSubmit, onFinalSubmit,
+    onSubmitSuccess, onSubmitError, onLoadError, onReady, onUploadMedia,
   } = props;
 
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -124,13 +125,19 @@ export function useFFForm(props: FFFormProps) {
     }
     const payload = engine.buildPayload({ isFinal });
     try {
-      if (isFinal) await onFinalSubmit?.(payload);
-      else await onDraftSubmit?.(payload);
-      const key = await getKey();
-      const result = await adapter.submitForm({ apiBaseUrl, apiKey: key, payload, isFinal });
-      onSubmitSuccess?.(result);
+      if (onSubmit) {
+        // Custom submit handler — skip API call entirely
+        const result = await onSubmit(payload);
+        onSubmitSuccess?.(result ?? payload);
+      } else {
+        if (isFinal) await onFinalSubmit?.(payload);
+        else await onDraftSubmit?.(payload);
+        const key = await getKey();
+        const result = await adapter.submitForm({ apiBaseUrl, apiKey: key, payload, isFinal });
+        onSubmitSuccess?.(result);
+      }
     } catch (err) { onSubmitError?.(err); }
-  }, [adapter, apiBaseUrl, getKey, onDraftSubmit, onFinalSubmit, onSubmitError, onSubmitSuccess]);
+  }, [adapter, apiBaseUrl, getKey, onSubmit, onDraftSubmit, onFinalSubmit, onSubmitError, onSubmitSuccess]);
 
   const submitDraft = useCallback(() => doSubmit(false), [doSubmit]);
   const submitFinal = useCallback(() => doSubmit(true), [doSubmit]);
@@ -138,9 +145,12 @@ export function useFFForm(props: FFFormProps) {
   const reload = useCallback(() => load(), [load]);
 
   const uploadMediaForField = useCallback(async (fieldId: string, file: File) => {
+    if (onUploadMedia) {
+      return onUploadMedia(file, fieldId);
+    }
     const key = await getKey();
     return adapter.uploadMedia({ apiBaseUrl, apiKey: key, submissionId, fieldId, file });
-  }, [adapter, apiBaseUrl, getKey, submissionId]);
+  }, [adapter, apiBaseUrl, getKey, onUploadMedia, submissionId]);
 
   const deleteMediaItem = useCallback(async (mediaUuid: string) => {
     const key = await getKey();

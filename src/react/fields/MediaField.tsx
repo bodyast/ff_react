@@ -59,9 +59,11 @@ export function MediaField({
       if (maxFiles !== undefined && newEntries.length >= maxFiles) break;
       try {
         const result = await uploadMedia(file);
-        const objectUrl = URL.createObjectURL(file);
-        objectUrlsRef.current.push(objectUrl);
-        newEntries.push({ uuid: result.uuid, name: file.name, url: objectUrl });
+        // result may have uuid (backend ID) or url (direct link) — use whichever is present
+        const mediaId = result.uuid ?? result.url ?? "";
+        const objectUrl = result.url ?? URL.createObjectURL(file);
+        if (!result.url) objectUrlsRef.current.push(objectUrl); // only track blob URLs for cleanup
+        newEntries.push({ uuid: mediaId, name: file.name, url: objectUrl });
       } catch (err) {
         errors.push(`Failed to upload "${file.name}": ${err instanceof Error ? err.message : "unknown error"}`);
       }
