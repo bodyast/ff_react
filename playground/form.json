@@ -1,0 +1,2000 @@
+{
+  "uuid": "019e0213-ba21-733d-9146-c3846813b77e",
+  "title": "MHS Summary Form",
+  "description": "MHS Summary Form",
+  "dependencies": [
+    {
+      "id": "rule_G8LGvu2tNx0FpL6o",
+      "sources": [
+        "customer_name"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "customer_name.value"
+            },
+            "PIC (402)"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "section_pic_donors_section",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_vtTEbrUzHwliKn4n",
+      "sources": [
+        "customer_name"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "customer_name.value"
+                },
+                "PIC (402)"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "section_pic_donors_section",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_4FwwCOOsMakHmaRH",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "job_canceled_upon_arrival.value"
+            },
+            "no"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "section_completed_job_details",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_NfFp50sdpZv4RQ5b",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "job_canceled_upon_arrival.value"
+                },
+                "no"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "section_completed_job_details",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_99yPWXmzTvkoKGcp",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "job_canceled_upon_arrival.value"
+            },
+            "yes"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_name",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_cxAxgGEOps5uPRoj",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "job_canceled_upon_arrival.value"
+                },
+                "yes"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_name",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_4id4KwFgWiEJOZwT",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "job_canceled_upon_arrival.value"
+            },
+            "yes"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_name",
+          "property": "required",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_SSQj2PRwQYXobl3W",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "job_canceled_upon_arrival.value"
+                },
+                "yes"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_name",
+          "property": "required",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_P7lwpNDk6gfE0HcC",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "job_canceled_upon_arrival.value"
+            },
+            "yes"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_signature",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_RxFhiKcbjQnQRIIr",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "job_canceled_upon_arrival.value"
+                },
+                "yes"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_signature",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_FJ0pVJ0xBEoxHDPO",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "job_canceled_upon_arrival.value"
+            },
+            "yes"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_signature",
+          "property": "required",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_hOiyJVZVyyRunot5",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "job_canceled_upon_arrival.value"
+                },
+                "yes"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "onsite_contact_signature",
+          "property": "required",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_UuqM2CAOBjl33rrB",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "job_canceled_upon_arrival.value"
+            },
+            "yes"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "cancelation_reason",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_og5fc8FqpsIoHcgH",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "job_canceled_upon_arrival.value"
+                },
+                "yes"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "cancelation_reason",
+          "property": "hidden",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_OqeuIN28To1WrWVx",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "==": [
+            {
+              "var": "job_canceled_upon_arrival.value"
+            },
+            "yes"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "cancelation_reason",
+          "property": "required",
+          "valueResolver": {
+            "type": "raw",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_Eqq6AMr4ODHk6u2n",
+      "sources": [
+        "job_canceled_upon_arrival"
+      ],
+      "trigger": "change",
+      "condition": {
+        "type": "logic",
+        "value": {
+          "!": [
+            {
+              "==": [
+                {
+                  "var": "job_canceled_upon_arrival.value"
+                },
+                "yes"
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "target": "cancelation_reason",
+          "property": "required",
+          "valueResolver": {
+            "type": "raw",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_9uZ0eCsH0fLKsACD",
+      "sources": [
+        "donors"
+      ],
+      "trigger": "change",
+      "actions": [
+        {
+          "target": "total_donors_expected",
+          "property": "value",
+          "valueResolver": {
+            "type": "logic",
+            "value": {
+              "reduce": [
+                {
+                  "var": "donors"
+                },
+                {
+                  "+": [
+                    {
+                      "var": "accumulator"
+                    },
+                    1
+                  ]
+                },
+                0
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_GzqtHF7pqtCkAxMI",
+      "sources": [
+        "donors.*.collection_status"
+      ],
+      "trigger": "change",
+      "actions": [
+        {
+          "target": "number_of_donors_tested",
+          "property": "value",
+          "valueResolver": {
+            "type": "logic",
+            "value": {
+              "reduce": [
+                {
+                  "filter": [
+                    {
+                      "var": "donors"
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "current.collection_status.value"
+                        },
+                        "completed"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "+": [
+                    {
+                      "var": "accumulator"
+                    },
+                    1
+                  ]
+                },
+                0
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rule_tPvuXLU6mqWL8N3o",
+      "sources": [
+        "odometer_start",
+        "odometer_finish"
+      ],
+      "trigger": "change",
+      "actions": [
+        {
+          "target": "total_miles",
+          "property": "value",
+          "valueResolver": {
+            "type": "logic",
+            "value": {
+              "max": [
+                0,
+                {
+                  "-": [
+                    {
+                      "var": [
+                        "odometer_finish.value",
+                        0
+                      ]
+                    },
+                    {
+                      "var": [
+                        "odometer_start.value",
+                        0
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "mhs_summary_form_page",
+      "settings": {
+        "hidden": false
+      },
+      "title": "MHS Summary Form",
+      "description": null,
+      "order": 1,
+      "sections": [
+        {
+          "id": "section_409",
+          "settings": {
+            "hidden": false
+          },
+          "title": "Job Details",
+          "description": null,
+          "order": 1,
+          "fields": [
+            {
+              "id": "site_id",
+              "title": "Site ID",
+              "description": null,
+              "order": 1,
+              "type": "number",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "min": null,
+                "max": null,
+                "is_counter": false,
+                "step": 1
+              }
+            },
+            {
+              "id": "job_id",
+              "title": "Job ID",
+              "description": null,
+              "order": 2,
+              "type": "number",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "min": null,
+                "max": null,
+                "is_counter": false,
+                "step": 1
+              }
+            },
+            {
+              "id": "customer_name",
+              "title": "Customer Name",
+              "description": null,
+              "order": 3,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "site_full_address",
+              "title": "Site Full Address",
+              "description": null,
+              "order": 4,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "collector_contractor_name",
+              "title": "Collector / Contractor Name",
+              "description": null,
+              "order": 5,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "time_of_arrival",
+              "title": "Time of Arrival",
+              "description": null,
+              "order": 6,
+              "type": "date",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "display_format": "H:i",
+                "min": null,
+                "max": null
+              }
+            }
+          ]
+        },
+        {
+          "id": "section_9493158",
+          "settings": {
+            "hidden": false
+          },
+          "title": "Reason for Test",
+          "description": null,
+          "order": 2,
+          "fields": [
+            {
+              "id": "reason_for_test",
+              "title": "Reason for Test",
+              "description": null,
+              "order": 1,
+              "type": "checkbox",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "is_multiple": false,
+                "options": [
+                  {
+                    "label": "Random",
+                    "value": "Random"
+                  },
+                  {
+                    "label": "Reasonable Suspicion",
+                    "value": "Reasonable Suspicion"
+                  },
+                  {
+                    "label": "Post Accident",
+                    "value": "Post Accident"
+                  },
+                  {
+                    "label": "Pre-Employment",
+                    "value": "Pre-Employment"
+                  },
+                  {
+                    "label": "Return to Duty",
+                    "value": "Return to Duty"
+                  },
+                  {
+                    "label": "Other",
+                    "value": "Other"
+                  }
+                ],
+                "is_switch": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "section_82",
+          "settings": {
+            "hidden": false
+          },
+          "title": "Donor List",
+          "description": null,
+          "order": 3,
+          "fields": [
+            {
+              "id": "donors",
+              "title": "Donor List",
+              "description": "List all donor names submitted with collection request",
+              "order": 1,
+              "type": "subform",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "id": "347c5598-247a-335b-90ed-491b61c048d6",
+                "allow_many": true,
+                "inline": false,
+                "min": 1,
+                "max": null,
+                "text_add": "Add donor",
+                "text_remove": "Remove donor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "section_pic_donors_section",
+          "settings": {
+            "hidden": true
+          },
+          "title": "Physical Immediate Care Donors ONLY",
+          "description": null,
+          "order": 4,
+          "fields": [
+            {
+              "id": "date_333648",
+              "title": "Patient Date of Birth",
+              "description": null,
+              "order": 1,
+              "type": "date",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "display_format": "d.m.Y",
+                "min": null,
+                "max": null
+              }
+            },
+            {
+              "id": "patient_address",
+              "title": "Address",
+              "description": null,
+              "order": 2,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "patient_city",
+              "title": "City",
+              "description": null,
+              "order": 3,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "patient_state",
+              "title": "State",
+              "description": null,
+              "order": 4,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "patient_zip",
+              "title": "ZIP",
+              "description": null,
+              "order": 5,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "patient_phone",
+              "title": "Phone",
+              "description": null,
+              "order": 6,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "physicians_clinic_name",
+              "title": "Physician's Clinic Name",
+              "description": null,
+              "order": 7,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            }
+          ]
+        },
+        {
+          "id": "section_42887",
+          "settings": {
+            "hidden": false
+          },
+          "title": "Canceled Upon Arrival",
+          "description": null,
+          "order": 5,
+          "fields": [
+            {
+              "id": "job_canceled_upon_arrival",
+              "title": "Was job canceled upon arrival?",
+              "description": null,
+              "order": 1,
+              "type": "choice",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "options": [
+                  {
+                    "label": "Yes",
+                    "value": "yes"
+                  },
+                  {
+                    "label": "No",
+                    "value": "no"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "onsite_contact_name",
+              "title": "Onsite Contact Name",
+              "description": null,
+              "order": 2,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": true,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "onsite_contact_signature",
+              "title": "Onsite Contact Signature",
+              "description": null,
+              "order": 3,
+              "type": "media",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": true,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "signature",
+                "min_files": 1,
+                "max_files": 1,
+                "min_size": 0,
+                "max_size": 500,
+                "allowed_formats": [
+                  "svg",
+                  "png"
+                ],
+                "scanner": false
+              }
+            },
+            {
+              "id": "cancelation_reason",
+              "title": "Reason for Cancelation",
+              "description": null,
+              "order": 4,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": true,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "big",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            }
+          ]
+        },
+        {
+          "id": "section_completed_job_details",
+          "settings": {
+            "hidden": true
+          },
+          "title": "Completed Job Details",
+          "description": null,
+          "order": 6,
+          "fields": [
+            {
+              "id": "wait_time_required",
+              "title": "Wait Time Required?",
+              "description": null,
+              "order": 1,
+              "type": "choice",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "options": [
+                  {
+                    "label": "Yes",
+                    "value": "yes"
+                  },
+                  {
+                    "label": "No",
+                    "value": "no"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "total_donors_expected",
+              "title": "Total Number of Donors Expected",
+              "description": null,
+              "order": 2,
+              "type": "number",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "min": null,
+                "max": null,
+                "is_counter": false,
+                "step": 1
+              }
+            },
+            {
+              "id": "number_of_donors_tested",
+              "title": "Number of Donors Tested",
+              "description": null,
+              "order": 3,
+              "type": "number",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": true,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "min": null,
+                "max": null,
+                "is_counter": false,
+                "step": 1
+              }
+            },
+            {
+              "id": "time_of_departure",
+              "title": "Time of Departure",
+              "description": null,
+              "order": 4,
+              "type": "date",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "display_format": "H:i",
+                "min": null,
+                "max": null
+              }
+            }
+          ]
+        },
+        {
+          "id": "section_4717272",
+          "settings": {
+            "hidden": false
+          },
+          "title": "Mileage and Shipment",
+          "description": null,
+          "order": 7,
+          "fields": [
+            {
+              "id": "odometer_start",
+              "title": "Odometer Start",
+              "description": null,
+              "order": 1,
+              "type": "number",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "min": null,
+                "max": null,
+                "is_counter": false,
+                "step": 1
+              }
+            },
+            {
+              "id": "odometer_finish",
+              "title": "Odometer Finish",
+              "description": null,
+              "order": 2,
+              "type": "number",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "min": null,
+                "max": null,
+                "is_counter": false,
+                "step": 1
+              }
+            },
+            {
+              "id": "total_miles",
+              "title": "Total Miles",
+              "description": null,
+              "order": 3,
+              "type": "number",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": true,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "min": null,
+                "max": null,
+                "is_counter": false,
+                "step": 1
+              }
+            },
+            {
+              "id": "shipment_tracking_number",
+              "title": "Shipment Tracking #",
+              "description": null,
+              "order": 4,
+              "type": "text",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "type": "small",
+                "min": 0,
+                "max": 255,
+                "mask": null
+              }
+            },
+            {
+              "id": "date_52456",
+              "title": "Shipment Date",
+              "description": null,
+              "order": 5,
+              "type": "date",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": "2026-05-11T00:00:00.000Z",
+                "display_format": "d.m.Y",
+                "min": null,
+                "max": null
+              }
+            },
+            {
+              "id": "tracking_service",
+              "title": "Tracking Service",
+              "description": null,
+              "order": 6,
+              "type": "select",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "default",
+                "default_value": null,
+                "is_multiple": false,
+                "options": [
+                  {
+                    "label": "FedEx",
+                    "value": "fedex"
+                  },
+                  {
+                    "label": "UPS",
+                    "value": "ups"
+                  }
+                ],
+                "source": null
+              }
+            }
+          ]
+        },
+        {
+          "id": "section_288275484",
+          "settings": {
+            "hidden": false
+          },
+          "title": "Submit",
+          "description": null,
+          "order": 8,
+          "fields": [
+            {
+              "id": "button_2659",
+              "title": "Submit",
+              "description": null,
+              "order": 1,
+              "type": "button",
+              "settings": {
+                "required": false,
+                "disabled": false,
+                "readonly": false,
+                "hidden": false,
+                "timestamp": false,
+                "memory": false,
+                "geo": false,
+                "label": false,
+                "style": "success",
+                "default_value": null,
+                "action": {
+                  "type": "submit",
+                  "target": null
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subforms": {
+    "347c5598-247a-335b-90ed-491b61c048d6": {
+      "uuid": "347c5598-247a-335b-90ed-491b61c048d6",
+      "title": "MHS Summary Form Donor",
+      "description": "MHS Summary Form Donor",
+      "dependencies": [
+        {
+          "id": "rule_OBWnelN6LqwKnyK0",
+          "sources": [
+            "id_type"
+          ],
+          "trigger": "change",
+          "condition": {
+            "type": "logic",
+            "value": {
+              "==": [
+                {
+                  "var": "id_type.value"
+                },
+                "ssn"
+              ]
+            }
+          },
+          "actions": [
+            {
+              "target": "employee_id",
+              "property": "mask",
+              "valueResolver": {
+                "type": "raw",
+                "value": "***-**-####"
+              }
+            }
+          ]
+        },
+        {
+          "id": "rule_wWcaQoKFXKtpOnAI",
+          "sources": [
+            "collection_status"
+          ],
+          "trigger": "change",
+          "condition": {
+            "type": "logic",
+            "value": {
+              "==": [
+                {
+                  "var": "collection_status.value"
+                },
+                "not_completed"
+              ]
+            }
+          },
+          "actions": [
+            {
+              "target": "not_completed_reason",
+              "property": "hidden",
+              "valueResolver": {
+                "type": "raw",
+                "value": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "rule_mCje0W2gaz7vANkB",
+          "sources": [
+            "collection_status"
+          ],
+          "trigger": "change",
+          "condition": {
+            "type": "logic",
+            "value": {
+              "!": [
+                {
+                  "==": [
+                    {
+                      "var": "collection_status.value"
+                    },
+                    "not_completed"
+                  ]
+                }
+              ]
+            }
+          },
+          "actions": [
+            {
+              "target": "not_completed_reason",
+              "property": "hidden",
+              "valueResolver": {
+                "type": "raw",
+                "value": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "rule_YEBgJjax4wPcHjBl",
+          "sources": [
+            "collection_status"
+          ],
+          "trigger": "change",
+          "condition": {
+            "type": "logic",
+            "value": {
+              "==": [
+                {
+                  "var": "collection_status.value"
+                },
+                "not_completed"
+              ]
+            }
+          },
+          "actions": [
+            {
+              "target": "not_completed_reason",
+              "property": "required",
+              "valueResolver": {
+                "type": "raw",
+                "value": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "rule_GZQEZNmNwbXu9Gil",
+          "sources": [
+            "collection_status"
+          ],
+          "trigger": "change",
+          "condition": {
+            "type": "logic",
+            "value": {
+              "!": [
+                {
+                  "==": [
+                    {
+                      "var": "collection_status.value"
+                    },
+                    "not_completed"
+                  ]
+                }
+              ]
+            }
+          },
+          "actions": [
+            {
+              "target": "not_completed_reason",
+              "property": "required",
+              "valueResolver": {
+                "type": "raw",
+                "value": false
+              }
+            }
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "mhs_summary_form_donor_page",
+          "settings": {
+            "hidden": false
+          },
+          "title": "Summary Donor",
+          "description": null,
+          "order": 1,
+          "sections": [
+            {
+              "id": "section_788549961",
+              "settings": {
+                "hidden": false
+              },
+              "title": "Donor Details",
+              "description": null,
+              "order": 1,
+              "fields": [
+                {
+                  "id": "first_name",
+                  "title": "Name",
+                  "description": null,
+                  "order": 1,
+                  "type": "text",
+                  "settings": {
+                    "required": true,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "type": "small",
+                    "min": 0,
+                    "max": 255,
+                    "mask": null
+                  }
+                },
+                {
+                  "id": "last_name",
+                  "title": "Last Name",
+                  "description": null,
+                  "order": 2,
+                  "type": "text",
+                  "settings": {
+                    "required": true,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "type": "small",
+                    "min": 0,
+                    "max": 255,
+                    "mask": null
+                  }
+                },
+                {
+                  "id": "id_type",
+                  "title": "Type of ID",
+                  "description": null,
+                  "order": 3,
+                  "type": "select",
+                  "settings": {
+                    "required": true,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "is_multiple": false,
+                    "options": [
+                      {
+                        "label": "SSN",
+                        "value": "ssn"
+                      },
+                      {
+                        "label": "License #",
+                        "value": "license"
+                      }
+                    ],
+                    "source": null
+                  }
+                },
+                {
+                  "id": "employee_id",
+                  "title": "Employee ID",
+                  "description": null,
+                  "order": 4,
+                  "type": "text",
+                  "settings": {
+                    "required": true,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "type": "small",
+                    "min": 0,
+                    "max": 255,
+                    "mask": null
+                  }
+                },
+                {
+                  "id": "uds_specimen_id_type_d",
+                  "title": "UDS Specimen ID",
+                  "description": null,
+                  "order": 5,
+                  "type": "number",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "min": null,
+                    "max": null,
+                    "is_counter": false,
+                    "step": 1
+                  }
+                },
+                {
+                  "id": "rapid_test_specimen_id_type_rapid",
+                  "title": "Rapid Test Specimen ID",
+                  "description": null,
+                  "order": 6,
+                  "type": "number",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "min": null,
+                    "max": null,
+                    "is_counter": false,
+                    "step": 1
+                  }
+                },
+                {
+                  "id": "breathalyzer_record_id_type_a",
+                  "title": "Breathalyzer Record ID",
+                  "description": null,
+                  "order": 7,
+                  "type": "number",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "min": null,
+                    "max": null,
+                    "is_counter": false,
+                    "step": 1
+                  }
+                },
+                {
+                  "id": "breathalyzer_confirmation_id_type_a2",
+                  "title": "Breathalyzer Confirmation ID",
+                  "description": null,
+                  "order": 8,
+                  "type": "number",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "min": null,
+                    "max": null,
+                    "is_counter": false,
+                    "step": 1
+                  }
+                },
+                {
+                  "id": "hair_specimen_id_type_h",
+                  "title": "Hair Specimen ID",
+                  "description": null,
+                  "order": 9,
+                  "type": "text",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "type": "small",
+                    "min": 0,
+                    "max": 255,
+                    "mask": null
+                  }
+                },
+                {
+                  "id": "oral_fluid_specimen_id_type_o",
+                  "title": "Oral Fluid Specimen ID",
+                  "description": null,
+                  "order": 10,
+                  "type": "number",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "min": null,
+                    "max": null,
+                    "is_counter": false,
+                    "step": 1
+                  }
+                },
+                {
+                  "id": "date_279596",
+                  "title": "Date Tested",
+                  "description": "Collector can clear this date if donor did not show up",
+                  "order": 11,
+                  "type": "date",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "display_format": "d.m.Y",
+                    "min": null,
+                    "max": null
+                  }
+                },
+                {
+                  "id": "collection_status",
+                  "title": "Collection Status",
+                  "description": null,
+                  "order": 12,
+                  "type": "select",
+                  "settings": {
+                    "required": true,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "is_multiple": false,
+                    "options": [
+                      {
+                        "label": "Completed",
+                        "value": "completed"
+                      },
+                      {
+                        "label": "Not Completed",
+                        "value": "not_completed"
+                      }
+                    ],
+                    "source": null
+                  }
+                },
+                {
+                  "id": "not_completed_reason",
+                  "title": "Reason",
+                  "description": null,
+                  "order": 13,
+                  "type": "select",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": true,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "is_multiple": false,
+                    "options": [
+                      {
+                        "label": "Call Out",
+                        "value": "Call Out"
+                      },
+                      {
+                        "label": "No Show",
+                        "value": "No Show"
+                      },
+                      {
+                        "label": "Off Work",
+                        "value": "Off Work"
+                      },
+                      {
+                        "label": "Refused to Test / Walk Out",
+                        "value": "Refused to Test / Walk Out"
+                      },
+                      {
+                        "label": "Shy Bladder",
+                        "value": "Shy Bladder"
+                      },
+                      {
+                        "label": "Sleeper (Not Present During Onsite Event)",
+                        "value": "Sleeper (Not Present During Onsite Event)"
+                      },
+                      {
+                        "label": "Vacation",
+                        "value": "Vacation"
+                      },
+                      {
+                        "label": "Working at Different Hub",
+                        "value": "Working at Different Hub"
+                      }
+                    ],
+                    "source": null
+                  }
+                },
+                {
+                  "id": "documents_scanner",
+                  "title": "Documents Scanner",
+                  "description": null,
+                  "order": 14,
+                  "type": "media",
+                  "settings": {
+                    "required": false,
+                    "disabled": false,
+                    "readonly": false,
+                    "hidden": false,
+                    "timestamp": false,
+                    "memory": false,
+                    "geo": false,
+                    "label": false,
+                    "style": "default",
+                    "default_value": null,
+                    "type": "document",
+                    "min_files": 1,
+                    "max_files": 10,
+                    "min_size": 0,
+                    "max_size": 10240,
+                    "allowed_formats": [
+                      "pdf",
+                      "jpg",
+                      "jpeg",
+                      "png"
+                    ],
+                    "scanner": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "subforms": []
+    }
+  }
+}

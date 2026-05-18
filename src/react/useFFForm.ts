@@ -107,6 +107,22 @@ export function useFFForm(props: FFFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.schema]);
 
+  useEffect(() => {
+    const handler = (event) => {
+      if (event.detail?.type === 'submit') {
+        doSubmit(true).then(r => {
+          console.log('submit success', r);
+        });
+      }
+    };
+
+    document.addEventListener("ff-forms:action", handler);
+
+    return () => {
+      document.removeEventListener("ff-forms:action", handler);
+    };
+  }, []);
+
   useEffect(() => { if (autoLoad) void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const changeField = useCallback((fieldId: string, value: unknown) => { engineRef.current?.changeField(fieldId, value); }, []);

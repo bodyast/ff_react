@@ -35,8 +35,8 @@ function validateField(field: FormField, value: unknown, state: FieldState | und
     const n = Number(value);
     if (isNaN(n)) { errors.push(`${label} must be a number`); }
     else {
-      if (s.min !== undefined && n < Number(s.min)) errors.push(`${label} must be at least ${s.min}`);
-      if (s.max !== undefined && n > Number(s.max)) errors.push(`${label} must be at most ${s.max}`);
+      if (s.min !== undefined && s.min != null && n < Number(s.min)) errors.push(`${label} must be at least ${s.min}`);
+      if (s.max !== undefined && s.max != null && n > Number(s.max)) errors.push(`${label} must be at most ${s.max}`);
     }
   }
   if (field.type === "text" || field.type === "textarea") {
