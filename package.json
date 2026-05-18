@@ -20,6 +20,7 @@
   "scripts": {
     "playground": "vite",
     "build": "tsup",
+    "prepare": "npm run build",
     "dev": "tsup --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
