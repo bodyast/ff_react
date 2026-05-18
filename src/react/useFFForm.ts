@@ -108,7 +108,7 @@ export function useFFForm(props: FFFormProps) {
   }, [state.schema]);
 
   useEffect(() => {
-    const handler = (event) => {
+    const handler = (event: { detail: { type: string; }; }) => {
       if (event.detail?.type === 'submit') {
         doSubmit(true).then(r => {
           console.log('submit success', r);
@@ -116,9 +116,11 @@ export function useFFForm(props: FFFormProps) {
       }
     };
 
+    // @ts-ignore
     document.addEventListener("ff-forms:action", handler);
 
     return () => {
+      // @ts-ignore
       document.removeEventListener("ff-forms:action", handler);
     };
   }, []);

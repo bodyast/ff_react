@@ -493,8 +493,8 @@ function validateField(field, value, state) {
     if (isNaN(n)) {
       errors.push(`${label} must be a number`);
     } else {
-      if (s.min !== void 0 && n < Number(s.min)) errors.push(`${label} must be at least ${s.min}`);
-      if (s.max !== void 0 && n > Number(s.max)) errors.push(`${label} must be at most ${s.max}`);
+      if (s.min !== void 0 && s.min != null && n < Number(s.min)) errors.push(`${label} must be at least ${s.min}`);
+      if (s.max !== void 0 && s.max != null && n > Number(s.max)) errors.push(`${label} must be at most ${s.max}`);
     }
   }
   if (field.type === "text" || field.type === "textarea") {
@@ -860,6 +860,19 @@ function useFFForm(props) {
       reload
     });
   }, [state.schema]);
+  useEffect(() => {
+    const handler = (event) => {
+      if (event.detail?.type === "submit") {
+        doSubmit(true).then((r) => {
+          console.log("submit success", r);
+        });
+      }
+    };
+    document.addEventListener("ff-forms:action", handler);
+    return () => {
+      document.removeEventListener("ff-forms:action", handler);
+    };
+  }, []);
   useEffect(() => {
     if (autoLoad) void load();
   }, []);
@@ -2026,7 +2039,7 @@ function SectionAccordion({
     }).length;
   }
   return /* @__PURE__ */ jsx16("div", { className: "ff-form__sections", children: sections.filter((s) => !fieldStates[s.id]?.hidden).map((section) => {
-    const isOpen = expanded.has(section.id);
+    const isOpen = true;
     const errors = sectionErrorCount(section);
     const missing = sectionMissingCount(section);
     const hasBadge = errors > 0 || missing > 0;
@@ -2048,16 +2061,13 @@ function SectionAccordion({
               onClick: () => toggle(section.id),
               children: [
                 /* @__PURE__ */ jsx16("span", { className: "ff-form__section-header-title", children: section.title ?? "Section" }),
-                /* @__PURE__ */ jsxs10("span", { className: "ff-form__section-header-right", children: [
-                  hasBadge && /* @__PURE__ */ jsx16(
-                    "span",
-                    {
-                      className: `ff-form__section-badge ${errors > 0 ? "ff-form__section-badge--error" : "ff-form__section-badge--warn"}`,
-                      children: errors > 0 ? errors : missing
-                    }
-                  ),
-                  /* @__PURE__ */ jsx16("span", { className: "ff-form__section-chevron", "aria-hidden": "true", children: isOpen ? "\u25B2" : "\u25BC" })
-                ] })
+                /* @__PURE__ */ jsx16("span", { className: "ff-form__section-header-right", children: hasBadge && /* @__PURE__ */ jsx16(
+                  "span",
+                  {
+                    className: `ff-form__section-badge ${errors > 0 ? "ff-form__section-badge--error" : "ff-form__section-badge--warn"}`,
+                    children: errors > 0 ? errors : missing
+                  }
+                ) })
               ]
             }
           ),
