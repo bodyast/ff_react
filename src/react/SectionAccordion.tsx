@@ -65,7 +65,8 @@ export function SectionAccordion({
   return (
     <div className="ff-form__sections">
       {sections.filter((s) => !fieldStates[s.id]?.hidden).map((section) => {
-        const isOpen = expanded.has(section.id);
+        // const isOpen = expanded.has(section.id);
+        const isOpen = true;
         const errors = sectionErrorCount(section);
         const missing = sectionMissingCount(section);
         const hasBadge = errors > 0 || missing > 0;
@@ -101,9 +102,9 @@ export function SectionAccordion({
                     {errors > 0 ? errors : missing}
                   </span>
                 )}
-                <span className="ff-form__section-chevron" aria-hidden="true">
-                  {isOpen ? "▲" : "▼"}
-                </span>
+                {/*<span className="ff-form__section-chevron" aria-hidden="true">*/}
+                {/*  {isOpen ? "▲" : "▼"}*/}
+                {/*</span>*/}
               </span>
             </button>
 
