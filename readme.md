@@ -8,5 +8,10 @@ INSTALL
 ```
 
 ```bash
-npm install @iqtechnology/ff-forms-react
+yarn add github:bodyast/ff_react
+```
+
+RUN PLAYGROUND
+```bash
+npm run playground -- --port 5174
 ```

@@ -66,7 +66,7 @@ export type FFFormProps = {
 
   // Form identification
   formId?: string;
-  formVersionUuid?: string;
+  formVersionUuid: string;
   submissionId?: string;
 
   // Data sources (use one)

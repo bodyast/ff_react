@@ -7,7 +7,7 @@ export type ApiAdapterConfig = {
 };
 
 export type ApiAdapter = ApiAdapterConfig & {
-  fetchFormStructure?: (params: { apiBaseUrl?: string; apiKey?: string | null; formId: string }) => Promise<FormStructure>;
+  fetchFormStructure?: (params: { apiBaseUrl?: string; apiKey?: string | null; formVersionUuid: string }) => Promise<FormStructure>;
   fetchSubmission?: (params: { apiBaseUrl?: string; apiKey?: string | null; submissionId: string }) => Promise<FormSubmission>;
   createSubmission?: (params: { apiBaseUrl?: string; apiKey?: string | null; payload: FormSubmissionPayload }) => Promise<FormSubmission>;
   updateSubmission?: (params: { apiBaseUrl?: string; apiKey?: string | null; submissionId: string; payload: FormSubmissionPayload }) => Promise<FormSubmission>;

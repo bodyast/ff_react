@@ -52,8 +52,8 @@ export function useFFForm(props: FFFormProps) {
       const key = await getKey();
       let schema: FormStructure;
       if (schemaProp) { schema = schemaProp; }
-      else if (formId) { schema = await adapter.fetchFormStructure({ apiBaseUrl, apiKey: key, formId }); }
-      else { throw new Error("Provide `schema` prop or `formId`"); }
+      else if (formVersionUuid) { schema = await adapter.fetchFormStructure({ apiBaseUrl, apiKey: key, formVersionUuid }); }
+      else { throw new Error("Provide `schema` prop or `formVersionUuid`"); }
 
       // Resolve initial data — formData takes priority, initialData is a fallback
       let submissionData: Record<string, unknown> = {};

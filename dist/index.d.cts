@@ -181,7 +181,7 @@ type ApiAdapter = ApiAdapterConfig & {
     fetchFormStructure?: (params: {
         apiBaseUrl?: string;
         apiKey?: string | null;
-        formId: string;
+        formVersionUuid: string;
     }) => Promise<FormStructure>;
     fetchSubmission?: (params: {
         apiBaseUrl?: string;
@@ -271,7 +271,7 @@ type FFFormProps = {
     apiKey?: string;
     getApiKey?: () => string | null | Promise<string | null>;
     formId?: string;
-    formVersionUuid?: string;
+    formVersionUuid: string;
     submissionId?: string;
     /** Pre-built schema — skips API fetch */
     schema?: FormStructure;

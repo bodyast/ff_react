@@ -809,10 +809,10 @@ function useFFForm(props) {
       let schema;
       if (schemaProp) {
         schema = schemaProp;
-      } else if (formId) {
-        schema = await adapter.fetchFormStructure({ apiBaseUrl, apiKey: key, formId });
+      } else if (formVersionUuid) {
+        schema = await adapter.fetchFormStructure({ apiBaseUrl, apiKey: key, formVersionUuid });
       } else {
-        throw new Error("Provide `schema` prop or `formId`");
+        throw new Error("Provide `schema` prop or `formVersionUuid`");
       }
       let submissionData = {};
       if (formData) {
