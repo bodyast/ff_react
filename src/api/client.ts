@@ -39,8 +39,8 @@ export function createDefaultAdapter(config: ApiAdapterConfig = {}): ResolvedApi
   }
 
   return {
-    async fetchFormStructure({ apiBaseUrl, apiKey, formId }) {
-      return unwrap(await req<{ data?: FormStructure } | FormStructure>(u(apiBaseUrl, ENDPOINTS.formStructure(formId)), { method: "GET", headers: authHeaders(apiKey) }));
+    async fetchFormStructure({ apiBaseUrl, apiKey, formVersionUuid }) {
+      return unwrap(await req<{ data?: FormStructure } | FormStructure>(u(apiBaseUrl, ENDPOINTS.formStructure(formVersionUuid)), { method: "GET", headers: authHeaders(apiKey) }));
     },
     async fetchSubmission({ apiBaseUrl, apiKey, submissionId }) {
       return unwrap(await req<{ data?: FormSubmission } | FormSubmission>(u(apiBaseUrl, ENDPOINTS.submission(submissionId)), { method: "GET", headers: authHeaders(apiKey) }));

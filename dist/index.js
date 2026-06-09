@@ -689,8 +689,8 @@ function createDefaultAdapter(config = {}) {
     return raw && typeof raw === "object" && "data" in raw && raw.data !== void 0 ? raw.data : raw;
   }
   return {
-    async fetchFormStructure({ apiBaseUrl, apiKey, formId }) {
-      return unwrap(await req(u(apiBaseUrl, ENDPOINTS.formStructure(formId)), { method: "GET", headers: authHeaders(apiKey) }));
+    async fetchFormStructure({ apiBaseUrl, apiKey, formVersionUuid }) {
+      return unwrap(await req(u(apiBaseUrl, ENDPOINTS.formStructure(formVersionUuid)), { method: "GET", headers: authHeaders(apiKey) }));
     },
     async fetchSubmission({ apiBaseUrl, apiKey, submissionId }) {
       return unwrap(await req(u(apiBaseUrl, ENDPOINTS.submission(submissionId)), { method: "GET", headers: authHeaders(apiKey) }));
