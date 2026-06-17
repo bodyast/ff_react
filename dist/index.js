@@ -1576,6 +1576,9 @@ function SubFormField({
   function emit(next) {
     onChange(allowMany ? next : next[0] ?? {});
   }
+  function buildNestedFieldPath(entryIndex, childFieldId) {
+    return `${field.id}[${entryIndex}].${childFieldId}`;
+  }
   const safeUploadForField = uploadMediaForField ?? (() => Promise.resolve({ uuid: "" }));
   const safeDeleteMedia = deleteMedia ?? (() => Promise.resolve());
   function renderEntryHeader(idx, isOpen) {
@@ -1637,7 +1640,7 @@ function SubFormField({
               renderers,
               parentSchema: subformSchema,
               onFieldChange: (fId, val) => updateEntry(idx, fId, val),
-              uploadMediaForField: safeUploadForField,
+              uploadMediaForField: (fId, file) => safeUploadForField(buildNestedFieldPath(idx, fId), file),
               deleteMediaItem: safeDeleteMedia
             }
           ) })

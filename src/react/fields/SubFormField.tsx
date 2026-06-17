@@ -172,9 +172,13 @@ export function SubFormField({
     onChange(allowMany ? next : (next[0] ?? {}));
   }
 
+  function buildNestedFieldPath(entryIndex: number, childFieldId: string) {
+    return `${field.id}[${entryIndex}].${childFieldId}`;
+  }
+
   // Fallback handlers so nested media fields don't crash when not provided
   const safeUploadForField =
-    uploadMediaForField ?? (() => Promise.resolve({ uuid: "" as string }));
+      uploadMediaForField ?? (() => Promise.resolve({ uuid: "" as string }));
   const safeDeleteMedia = deleteMedia ?? (() => Promise.resolve());
 
   // ---------------------------------------------------------------------------
@@ -251,7 +255,9 @@ export function SubFormField({
                     renderers={renderers}
                     parentSchema={subformSchema}
                     onFieldChange={(fId, val) => updateEntry(idx, fId, val)}
-                    uploadMediaForField={safeUploadForField}
+                    uploadMediaForField={(fId, file) =>
+                        safeUploadForField(buildNestedFieldPath(idx, fId), file)
+                    }
                     deleteMediaItem={safeDeleteMedia}
                   />
                 </div>
