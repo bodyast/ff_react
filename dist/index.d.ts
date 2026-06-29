@@ -229,6 +229,17 @@ type ApiAdapter = ApiAdapterConfig & {
 type ResolvedApiAdapter = Required<Omit<ApiAdapter, "fetchFn" | "requestInit" | "proxyPath">>;
 
 type FieldRenderers = Record<string, React.ComponentType<FieldRendererProps>>;
+type MediaFetchResult = string | Blob | {
+    uuid?: string;
+    url?: string;
+    blob?: Blob;
+    file?: File;
+    name?: string;
+    mimeType?: string;
+    contentType?: string;
+    type?: string;
+    placeholderUrl?: string;
+} | null | undefined | void;
 type FieldRendererProps = {
     field: FormField;
     value: unknown;
@@ -248,6 +259,7 @@ type FieldRendererProps = {
         url?: string;
     }>;
     deleteMedia?: (mediaUuid: string) => Promise<void>;
+    fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
     /** Parent form schema — allows subform fields to resolve their nested schema */
     parentSchema?: FormStructure;
     /** Full validation errors map — used by subforms to show nested field errors */
@@ -315,6 +327,11 @@ type FFFormProps = {
         uuid?: string;
         url?: string;
     }>;
+    /**
+     * Custom media fetch handler used to resolve existing media UUIDs into preview/openable files.
+     * May return a direct URL, Blob/File, or an object with { url, blob/file, mimeType, name }.
+     */
+    onFetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
 };
 
 /**
@@ -432,4 +449,4 @@ declare const defaultApiAdapter: ResolvedApiAdapter;
 declare function resolveAdapter(partial?: ApiAdapter): ResolvedApiAdapter;
 declare function resolveEffectiveApiKey(apiKey?: string, getApiKey?: () => string | null | Promise<string | null>): Promise<string | null>;
 
-export { type ApiAdapter, type ApiAdapterConfig, type DependencyAction, type DependencyCondition, type DependencyValueResolver, FFForm, type FFFormContextValue, type FFFormProps, type FieldRendererProps, type FieldRenderers, type FieldState, type FormDependency, type FormElementSettings, type FormField, type FormFieldAction, type FormFieldOption, type FormFieldSettings, type FormFieldSource, type FormFieldSourceFilter, type FormPage, type FormSection, type FormStructure, type FormSubmission, type FormSubmissionPayload, type LookupList, type LookupListItem, type NormalizedSubformEntry, type ResolvedApiAdapter, type ValidationErrors, applyDefaultValues, applyJsonLogic, buildSubmissionPayload, createDefaultAdapter, createFormEngine, defaultApiAdapter, evaluateDependencies, isTruthy, normalizeSubmissionData, resolveAdapter, resolveEffectiveApiKey, useFFForm, validateForm };
+export { type ApiAdapter, type ApiAdapterConfig, type DependencyAction, type DependencyCondition, type DependencyValueResolver, FFForm, type FFFormContextValue, type FFFormProps, type FieldRendererProps, type FieldRenderers, type FieldState, type FormDependency, type FormElementSettings, type FormField, type FormFieldAction, type FormFieldOption, type FormFieldSettings, type FormFieldSource, type FormFieldSourceFilter, type FormPage, type FormSection, type FormStructure, type FormSubmission, type FormSubmissionPayload, type LookupList, type LookupListItem, type MediaFetchResult, type NormalizedSubformEntry, type ResolvedApiAdapter, type ValidationErrors, applyDefaultValues, applyJsonLogic, buildSubmissionPayload, createDefaultAdapter, createFormEngine, defaultApiAdapter, evaluateDependencies, isTruthy, normalizeSubmissionData, resolveAdapter, resolveEffectiveApiKey, useFFForm, validateForm };

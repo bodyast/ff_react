@@ -71,6 +71,7 @@ export function SubFormField({
   validationErrors = {},
   uploadMediaForField,
   deleteMedia,
+  fetchMedia,
   renderers,
 }: FieldRendererProps) {
   const settings = field.settings ?? {};
@@ -259,6 +260,7 @@ export function SubFormField({
                         safeUploadForField(buildNestedFieldPath(idx, fId), file)
                     }
                     deleteMediaItem={safeDeleteMedia}
+                    fetchMedia={fetchMedia}
                   />
                 </div>
               )}

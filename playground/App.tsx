@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { FFForm } from "@iqtechnology/ff-forms-react";
 import type { FormStructure, FormSubmissionPayload } from "@iqtechnology/ff-forms-react";
 
 // ---------------------------------------------------------------------------
@@ -7,6 +6,7 @@ import type { FormStructure, FormSubmissionPayload } from "@iqtechnology/ff-form
 //   import schema from "./form.json";
 // ---------------------------------------------------------------------------
 import schema from "./form.json";
+import { FFForm } from "../src";
 
 export default function App() {
   const [submitted, setSubmitted] = useState<FormSubmissionPayload | null>(null);
@@ -36,6 +36,9 @@ export default function App() {
           schema={schema as unknown as FormStructure}
           onSubmit={handleSubmit}
           onUploadMedia={handleUploadMedia}
+          onFetchMedia={(fileUuid) => {
+            console.log("Fetching media for submission:", fileUuid);
+          }}
         />
       </div>
 

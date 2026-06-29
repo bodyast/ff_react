@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormSection, FormStructure, ValidationErrors, FieldState } from "../types/form";
-import type { FieldRenderers } from "../types/props";
+import type { FieldRenderers, MediaFetchResult } from "../types/props";
 import { SectionRenderer } from "./SectionRenderer";
 
 type SectionAccordionProps = {
@@ -14,6 +14,7 @@ type SectionAccordionProps = {
   onFieldChange: (fieldId: string, value: unknown) => void;
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
+  fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
 };
 
 export function SectionAccordion({
@@ -27,9 +28,10 @@ export function SectionAccordion({
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
+  fetchMedia,
 }: SectionAccordionProps) {
   // First section is expanded by default (matches Flutter behaviour)
-  const [expanded, setExpanded] = useState<Set<string>>(
+  const [, setExpanded] = useState<Set<string>>(
     () => new Set(sections[0] ? [sections[0].id] : [])
   );
 
@@ -126,6 +128,7 @@ export function SectionAccordion({
                   onFieldChange={onFieldChange}
                   uploadMediaForField={uploadMediaForField}
                   deleteMediaItem={deleteMediaItem}
+                  fetchMedia={fetchMedia}
                 />
               </div>
             )}

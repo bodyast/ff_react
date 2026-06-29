@@ -60,4 +60,5 @@ export type {
   FFFormContextValue,
   FieldRendererProps,
   FieldRenderers,
+  MediaFetchResult,
 } from "./types/props";

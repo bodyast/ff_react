@@ -1370,24 +1370,72 @@ function MediaField({
   required,
   onChange,
   uploadMedia,
-  deleteMedia
+  deleteMedia,
+  fetchMedia
 }) {
   const inputRef = useRef2(null);
   const objectUrlsRef = useRef2([]);
+  const requestedFetchesRef = useRef2(/* @__PURE__ */ new Set());
   const [uploadErrors, setUploadErrors] = useState2([]);
+  const [fetchErrors, setFetchErrors] = useState2({});
+  const [fetchingMedia, setFetchingMedia] = useState2({});
+  const [resolvedMedia, setResolvedMedia] = useState2({});
+  const [viewerEntry, setViewerEntry] = useState2(null);
   const settings = field.settings ?? {};
   useEffect3(() => {
     return () => {
       objectUrlsRef.current.forEach(URL.revokeObjectURL);
     };
   }, []);
+  useEffect3(() => {
+    if (!viewerEntry) return;
+    function closeOnEscape(event) {
+      if (event.key === "Escape") setViewerEntry(null);
+    }
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [viewerEntry]);
   const isImage = field.type === "image";
   const maxFiles = settings.maxFiles ?? settings.max_files;
   const allowMany = Boolean(
     settings.allowMany ?? settings.allow_many ?? settings.isMultiple ?? settings.is_multiple ?? (maxFiles !== void 0 && maxFiles > 1)
   );
   const allowedFormats = settings.allowedFormats ?? settings.allowed_formats;
-  const entries = Array.isArray(value) ? value : value && typeof value === "object" ? [value] : typeof value === "string" && value ? [{ uuid: value }] : [];
+  const entries = normalizeEntries(value);
+  useEffect3(() => {
+    if (!fetchMedia) return;
+    let cancelled = false;
+    entries.forEach((entry) => {
+      if (!entry.uuid || entry.url || requestedFetchesRef.current.has(entry.uuid)) return;
+      requestedFetchesRef.current.add(entry.uuid);
+      setFetchingMedia((prev) => ({ ...prev, [entry.uuid]: true }));
+      setFetchErrors((prev) => {
+        const next = { ...prev };
+        delete next[entry.uuid];
+        return next;
+      });
+      Promise.resolve(fetchMedia(entry.uuid)).then((result) => {
+        if (cancelled) return;
+        setResolvedMedia((prev) => ({
+          ...prev,
+          [entry.uuid]: normalizeFetchResult(result, entry)
+        }));
+      }).catch((err) => {
+        if (cancelled) return;
+        setFetchErrors((prev) => ({
+          ...prev,
+          [entry.uuid]: err instanceof Error ? err.message : "Failed to fetch media"
+        }));
+        setResolvedMedia((prev) => ({ ...prev, [entry.uuid]: {} }));
+      }).finally(() => {
+        if (cancelled) return;
+        setFetchingMedia((prev) => ({ ...prev, [entry.uuid]: false }));
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [entries, fetchMedia]);
   async function handleFiles(files) {
     if (!files || files.length === 0 || !uploadMedia) return;
     setUploadErrors([]);
@@ -1400,7 +1448,7 @@ function MediaField({
         const mediaId = result.uuid ?? result.url ?? "";
         const objectUrl = result.url ?? URL.createObjectURL(file);
         if (!result.url) objectUrlsRef.current.push(objectUrl);
-        newEntries.push({ uuid: mediaId, name: file.name, url: objectUrl });
+        newEntries.push({ uuid: mediaId, name: file.name, url: objectUrl, mimeType: file.type });
       } catch (err) {
         errors.push(`Failed to upload "${file.name}": ${err instanceof Error ? err.message : "unknown error"}`);
       }
@@ -1421,6 +1469,117 @@ function MediaField({
   }
   const canAdd = !readonly && !disabled && (maxFiles === void 0 || entries.length < maxFiles);
   const accept = allowedFormats ? allowedFormats.map((f) => `.${f}`).join(",") : isImage ? "image/*" : void 0;
+  function normalizeEntries(input) {
+    const rawEntries = Array.isArray(input) ? input : input ? [input] : [];
+    return rawEntries.map((item) => {
+      if (typeof item === "string") return item ? { uuid: item } : null;
+      if (!item || typeof item !== "object") return null;
+      const raw = item;
+      const uuid = firstString(
+        raw.uuid,
+        raw.fileUuid,
+        raw.file_uuid,
+        raw.mediaUuid,
+        raw.media_uuid,
+        raw.id,
+        raw.url
+      );
+      if (!uuid) return null;
+      return {
+        uuid,
+        name: firstString(raw.name, raw.fileName, raw.file_name, raw.originalName, raw.original_name),
+        url: firstString(raw.url, raw.src, raw.href),
+        placeholderUrl: firstString(raw.placeholderUrl, raw.placeholder_url, raw.thumbnailUrl, raw.thumbnail_url),
+        mimeType: firstString(raw.mimeType, raw.mime_type),
+        contentType: firstString(raw.contentType, raw.content_type),
+        type: firstString(raw.type)
+      };
+    }).filter((entry) => entry !== null);
+  }
+  function firstString(...values) {
+    for (const item of values) {
+      if (typeof item === "string" && item.length > 0) return item;
+    }
+    return void 0;
+  }
+  function normalizeFetchResult(result, entry) {
+    if (!result) return {};
+    if (typeof result === "string") return { url: result };
+    if (result instanceof Blob) {
+      const objectUrl = URL.createObjectURL(result);
+      objectUrlsRef.current.push(objectUrl);
+      return {
+        url: objectUrl,
+        name: result instanceof File ? result.name : entry.name,
+        mimeType: result.type || getEntryMimeType(entry)
+      };
+    }
+    const blob = result.blob ?? result.file;
+    if (blob) {
+      const objectUrl = URL.createObjectURL(blob);
+      objectUrlsRef.current.push(objectUrl);
+      return {
+        url: result.url ?? objectUrl,
+        name: result.name ?? (blob instanceof File ? blob.name : entry.name),
+        mimeType: result.mimeType ?? result.contentType ?? result.type ?? blob.type ?? getEntryMimeType(entry)
+      };
+    }
+    return {
+      url: result.url,
+      name: result.name,
+      mimeType: result.mimeType ?? result.contentType ?? result.type
+    };
+  }
+  function getEntryMimeType(entry) {
+    return entry.mimeType ?? entry.contentType ?? (entry.type?.includes("/") ? entry.type : void 0);
+  }
+  function getDisplayMedia(entry) {
+    const resolved = resolvedMedia[entry.uuid];
+    const url = entry.url ?? resolved?.url;
+    const thumbUrl = entry.placeholderUrl ?? url;
+    const name = entry.name ?? resolved?.name ?? entry.uuid;
+    const mimeType = resolved?.mimeType ?? getEntryMimeType(entry);
+    return {
+      url,
+      thumbUrl,
+      name,
+      mimeType,
+      isImage: isImage || isImageMedia(name, thumbUrl, mimeType),
+      isPdf: isPdfMedia(name, url, mimeType),
+      isVideo: Boolean(mimeType?.startsWith("video/")),
+      isAudio: Boolean(mimeType?.startsWith("audio/"))
+    };
+  }
+  function getExtension(value2) {
+    if (!value2) return "";
+    const clean = value2.split("?")[0].split("#")[0];
+    const index = clean.lastIndexOf(".");
+    return index >= 0 ? clean.slice(index + 1).toLowerCase() : "";
+  }
+  function isImageMedia(name, url, mimeType) {
+    if (mimeType?.startsWith("image/")) return true;
+    return ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg", "avif"].includes(
+      getExtension(url) || getExtension(name)
+    );
+  }
+  function isPdfMedia(name, url, mimeType) {
+    return mimeType === "application/pdf" || getExtension(url) === "pdf" || getExtension(name) === "pdf";
+  }
+  function renderMediaPreview(entry) {
+    const media = getDisplayMedia(entry);
+    if (media.isImage && media.thumbUrl) {
+      return /* @__PURE__ */ jsx8(
+        "img",
+        {
+          src: media.thumbUrl,
+          alt: media.name,
+          className: "ff-form__media-preview"
+        }
+      );
+    }
+    const label = media.isPdf ? "PDF" : media.isVideo ? "VID" : media.isAudio ? "AUD" : "FILE";
+    return /* @__PURE__ */ jsx8("span", { className: "ff-form__media-file-icon", "aria-hidden": "true", children: label });
+  }
   return /* @__PURE__ */ jsxs5("div", { className: "ff-form__media-field", children: [
     canAdd && /* @__PURE__ */ jsxs5(Fragment, { children: [
       /* @__PURE__ */ jsx8(
@@ -1449,16 +1608,25 @@ function MediaField({
       )
     ] }),
     entries.length > 0 && /* @__PURE__ */ jsx8("ul", { className: "ff-form__media-list", children: entries.map((entry) => {
-      const thumb = entry.url ?? entry.placeholderUrl;
+      const media = getDisplayMedia(entry);
       return /* @__PURE__ */ jsxs5("li", { className: "ff-form__media-item", children: [
-        isImage && thumb ? /* @__PURE__ */ jsx8(
-          "img",
+        /* @__PURE__ */ jsxs5(
+          "button",
           {
-            src: thumb,
-            alt: entry.name ?? entry.uuid,
-            className: "ff-form__media-preview"
+            type: "button",
+            className: "ff-form__media-open",
+            onClick: () => setViewerEntry(entry),
+            "aria-label": `Open ${media.name}`,
+            children: [
+              renderMediaPreview(entry),
+              /* @__PURE__ */ jsxs5("span", { className: "ff-form__media-meta", children: [
+                /* @__PURE__ */ jsx8("span", { className: "ff-form__media-name", children: media.name }),
+                fetchingMedia[entry.uuid] && /* @__PURE__ */ jsx8("span", { className: "ff-form__media-status", children: "Loading media..." }),
+                fetchErrors[entry.uuid] && /* @__PURE__ */ jsx8("span", { className: "ff-form__media-status ff-form__media-status--error", children: fetchErrors[entry.uuid] })
+              ] })
+            ]
           }
-        ) : /* @__PURE__ */ jsx8("span", { className: "ff-form__media-name", children: entry.name ?? entry.uuid }),
+        ),
         !readonly && !disabled && /* @__PURE__ */ jsx8(
           "button",
           {
@@ -1471,6 +1639,63 @@ function MediaField({
         )
       ] }, entry.uuid);
     }) }),
+    viewerEntry && /* @__PURE__ */ jsx8(
+      "div",
+      {
+        className: "ff-form__media-viewer",
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-label": getDisplayMedia(viewerEntry).name,
+        onMouseDown: (event) => {
+          if (event.currentTarget === event.target) setViewerEntry(null);
+        },
+        children: /* @__PURE__ */ jsxs5("div", { className: "ff-form__media-viewer-panel", children: [
+          /* @__PURE__ */ jsxs5("div", { className: "ff-form__media-viewer-header", children: [
+            /* @__PURE__ */ jsx8("span", { className: "ff-form__media-viewer-title", children: getDisplayMedia(viewerEntry).name }),
+            /* @__PURE__ */ jsx8(
+              "button",
+              {
+                type: "button",
+                className: "ff-form__btn ff-form__btn--media-close",
+                onClick: () => setViewerEntry(null),
+                children: "Close"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx8("div", { className: "ff-form__media-viewer-body", children: (() => {
+            const media = getDisplayMedia(viewerEntry);
+            if (fetchingMedia[viewerEntry.uuid] && !media.url) {
+              return /* @__PURE__ */ jsx8("span", { className: "ff-form__media-viewer-empty", children: "Loading media..." });
+            }
+            if (media.isImage && media.url) {
+              return /* @__PURE__ */ jsx8("img", { src: media.url, alt: media.name, className: "ff-form__media-viewer-image" });
+            }
+            if (media.isPdf && media.url) {
+              return /* @__PURE__ */ jsx8("iframe", { src: media.url, title: media.name, className: "ff-form__media-viewer-frame" });
+            }
+            if (media.isVideo && media.url) {
+              return /* @__PURE__ */ jsx8("video", { src: media.url, className: "ff-form__media-viewer-video", controls: true });
+            }
+            if (media.isAudio && media.url) {
+              return /* @__PURE__ */ jsx8("audio", { src: media.url, className: "ff-form__media-viewer-audio", controls: true });
+            }
+            return /* @__PURE__ */ jsxs5("div", { className: "ff-form__media-viewer-empty", children: [
+              /* @__PURE__ */ jsx8("span", { children: fetchErrors[viewerEntry.uuid] ?? "Preview is not available for this file." }),
+              media.url && /* @__PURE__ */ jsx8(
+                "a",
+                {
+                  className: "ff-form__media-viewer-link",
+                  href: media.url,
+                  target: "_blank",
+                  rel: "noreferrer",
+                  children: "Open file"
+                }
+              )
+            ] });
+          })() })
+        ] })
+      }
+    ),
     entries.length === 0 && (readonly || disabled) && /* @__PURE__ */ jsx8("span", { className: "ff-form__media-empty", children: "No files" }),
     uploadErrors.map((msg, i) => /* @__PURE__ */ jsx8("span", { className: "ff-form__error", role: "alert", children: msg }, i))
   ] });
@@ -1508,6 +1733,7 @@ function SubFormField({
   validationErrors = {},
   uploadMediaForField,
   deleteMedia,
+  fetchMedia,
   renderers
 }) {
   const settings = field.settings ?? {};
@@ -1641,7 +1867,8 @@ function SubFormField({
               parentSchema: subformSchema,
               onFieldChange: (fId, val) => updateEntry(idx, fId, val),
               uploadMediaForField: (fId, file) => safeUploadForField(buildNestedFieldPath(idx, fId), file),
-              deleteMediaItem: safeDeleteMedia
+              deleteMediaItem: safeDeleteMedia,
+              fetchMedia
             }
           ) })
         ] }, idx);
@@ -1947,7 +2174,8 @@ function SectionRenderer({
   parentSchema,
   onFieldChange,
   uploadMediaForField,
-  deleteMediaItem
+  deleteMediaItem,
+  fetchMedia
 }) {
   const visibleFields = section.fields.filter(
     (f) => !fieldStates[f.id]?.hidden
@@ -1989,7 +2217,8 @@ function SectionRenderer({
               onChange: (value) => onFieldChange(field.id, value),
               uploadMedia: (file) => uploadMediaForField(field.id, file),
               uploadMediaForField,
-              deleteMedia: deleteMediaItem
+              deleteMedia: deleteMediaItem,
+              fetchMedia
             }
           ),
           errors?.map((msg, i) => /* @__PURE__ */ jsx15("span", { className: "ff-form__error", role: "alert", children: msg }, i))
@@ -2012,9 +2241,10 @@ function SectionAccordion({
   parentSchema,
   onFieldChange,
   uploadMediaForField,
-  deleteMediaItem
+  deleteMediaItem,
+  fetchMedia
 }) {
-  const [expanded, setExpanded] = useState5(
+  const [, setExpanded] = useState5(
     () => new Set(sections[0] ? [sections[0].id] : [])
   );
   function toggle(sectionId) {
@@ -2088,7 +2318,8 @@ function SectionAccordion({
                 parentSchema,
                 onFieldChange,
                 uploadMediaForField,
-                deleteMediaItem
+                deleteMediaItem,
+                fetchMedia
               }
             )
           ] })
@@ -2116,7 +2347,8 @@ function PageDetailView({
   onNext,
   onFieldChange,
   uploadMediaForField,
-  deleteMediaItem
+  deleteMediaItem,
+  fetchMedia
 }) {
   return /* @__PURE__ */ jsxs11("div", { className: "ff-form__page-detail", children: [
     /* @__PURE__ */ jsxs11("div", { className: "ff-form__page-detail-topbar", children: [
@@ -2150,7 +2382,8 @@ function PageDetailView({
         parentSchema,
         onFieldChange,
         uploadMediaForField,
-        deleteMediaItem
+        deleteMediaItem,
+        fetchMedia
       }
     ),
     totalPages > 1 && /* @__PURE__ */ jsxs11("div", { className: "ff-form__page-nav", children: [
@@ -2229,7 +2462,8 @@ function FFForm(props) {
     parentSchema: schema,
     onFieldChange: changeField,
     uploadMediaForField,
-    deleteMediaItem
+    deleteMediaItem,
+    fetchMedia: props.onFetchMedia
   };
   return /* @__PURE__ */ jsxs12(
     "div",

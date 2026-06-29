@@ -89,6 +89,7 @@ export function FFForm(props: FFFormProps) {
     onFieldChange: changeField,
     uploadMediaForField,
     deleteMediaItem,
+    fetchMedia: props.onFetchMedia,
   };
 
   // --------------------------------------------------------------------------

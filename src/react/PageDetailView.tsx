@@ -1,5 +1,5 @@
 import type { FormPage, FormStructure, ValidationErrors, FieldState } from "../types/form";
-import type { FieldRenderers } from "../types/props";
+import type { FieldRenderers, MediaFetchResult } from "../types/props";
 import { SectionAccordion } from "./SectionAccordion";
 
 type PageDetailViewProps = {
@@ -18,6 +18,7 @@ type PageDetailViewProps = {
   onFieldChange: (fieldId: string, value: unknown) => void;
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
+  fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
 };
 
 export function PageDetailView({
@@ -36,6 +37,7 @@ export function PageDetailView({
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
+  fetchMedia,
 }: PageDetailViewProps) {
   return (
     <div className="ff-form__page-detail">
@@ -74,6 +76,7 @@ export function PageDetailView({
         onFieldChange={onFieldChange}
         uploadMediaForField={uploadMediaForField}
         deleteMediaItem={deleteMediaItem}
+        fetchMedia={fetchMedia}
       />
 
       {/* Page prev/next */}

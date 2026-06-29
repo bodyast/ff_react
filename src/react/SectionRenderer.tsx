@@ -1,5 +1,5 @@
 import type { FormSection, FormStructure, ValidationErrors, FieldState } from "../types/form";
-import type { FieldRenderers } from "../types/props";
+import type { FieldRenderers, MediaFetchResult } from "../types/props";
 import { FieldRenderer } from "./FieldRenderer";
 
 type SectionRendererProps = {
@@ -13,6 +13,7 @@ type SectionRendererProps = {
   onFieldChange: (fieldId: string, value: unknown) => void;
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
+  fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
 };
 
 export function SectionRenderer({
@@ -26,6 +27,7 @@ export function SectionRenderer({
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
+  fetchMedia,
 }: SectionRendererProps) {
   const visibleFields = section.fields.filter(
     (f) => !fieldStates[f.id]?.hidden
@@ -85,6 +87,7 @@ export function SectionRenderer({
               uploadMedia={(file) => uploadMediaForField(field.id, file)}
               uploadMediaForField={uploadMediaForField}
               deleteMedia={deleteMediaItem}
+              fetchMedia={fetchMedia}
             />
 
             {errors?.map((msg, i) => (

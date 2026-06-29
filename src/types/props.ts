@@ -15,6 +15,24 @@ import type { ApiAdapter } from "./api";
 
 export type FieldRenderers = Record<string, React.ComponentType<FieldRendererProps>>;
 
+export type MediaFetchResult =
+  | string
+  | Blob
+  | {
+      uuid?: string;
+      url?: string;
+      blob?: Blob;
+      file?: File;
+      name?: string;
+      mimeType?: string;
+      contentType?: string;
+      type?: string;
+      placeholderUrl?: string;
+    }
+  | null
+  | undefined
+  | void;
+
 export type FieldRendererProps = {
   field: FormField;
   value: unknown;
@@ -29,6 +47,7 @@ export type FieldRendererProps = {
   /** Upload media for a CHILD field (used by subforms) */
   uploadMediaForField?: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMedia?: (mediaUuid: string) => Promise<void>;
+  fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
 
   /** Parent form schema — allows subform fields to resolve their nested schema */
   parentSchema?: FormStructure;
@@ -117,4 +136,9 @@ export type FFFormProps = {
    * Return { uuid } if you have a backend UUID, or { url } if you only have a direct link.
    */
   onUploadMedia?: (file: File, fieldId: string) => Promise<{ uuid?: string; url?: string }>;
+  /**
+   * Custom media fetch handler used to resolve existing media UUIDs into preview/openable files.
+   * May return a direct URL, Blob/File, or an object with { url, blob/file, mimeType, name }.
+   */
+  onFetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
 };
