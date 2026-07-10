@@ -693,12 +693,12 @@ function computeStates(schema, data) {
 
 // src/api/client.ts
 var ENDPOINTS = {
-  formStructure: (id) => `client/forms/${id}`,
-  submission: (id) => `client/submissions/${id}`,
-  submissions: () => `client/submissions`,
-  media: (sid) => `client/submissions/${sid}/media`,
-  mediaItem: (sid, mid) => `client/submissions/${sid}/media/${mid}`,
-  lookup: (id) => `client/lookup-lists/${id}`
+  formStructure: (id) => `v1/form_flex/proxy/forms/${id}`,
+  submission: (id) => `v1/form_flex/proxy/submissions/${id}`,
+  submissions: () => `v1/form_flex/proxy/submissions`,
+  media: (sid) => `v1/form_flex/proxy/submissions/${sid}/media`,
+  mediaItem: (sid, mid) => `v1/form_flex/proxy/submissions/${sid}/media/${mid}`,
+  lookup: (id) => `v1/form_flex/proxy/lookup-lists/${id}`
 };
 function buildUrl(base, proxy, path) {
   return `${(proxy ?? base ?? "").replace(/\/$/, "")}/${path}`;
@@ -968,6 +968,10 @@ function useFFForm(props) {
     const key = await getKey();
     return adapter.deleteMedia({ apiBaseUrl, apiKey: key, submissionId, mediaUuid });
   }, [adapter, apiBaseUrl, getKey, submissionId]);
+  const fetchLookupList = (0, import_react.useCallback)(async (listId) => {
+    const key = await getKey();
+    return adapter.fetchLookupList({ apiBaseUrl, apiKey: key, listId });
+  }, [adapter, apiBaseUrl, getKey]);
   return {
     loading: state.loading,
     error: state.error,
@@ -985,7 +989,8 @@ function useFFForm(props) {
     isReadonly,
     isRequired,
     uploadMediaForField,
-    deleteMediaItem
+    deleteMediaItem,
+    fetchLookupList
   };
 }
 
@@ -1230,7 +1235,7 @@ function SelectField({
       fetchLookupList(sourceId).then((res) => {
         if (settled) return;
         settled = true;
-        const items = res?.data?.items || [];
+        const items = res?.data?.items || res?.items || [];
         const labelKey = source?.label || "label";
         const valueKey = source?.value || "value";
         const mapped = items.map((item) => ({
@@ -2633,7 +2638,8 @@ function FFForm(props) {
     submitDraft,
     submitFinal,
     uploadMediaForField,
-    deleteMediaItem
+    deleteMediaItem,
+    fetchLookupList: internalFetchLookupList
   } = useFFForm(props);
   const [currentPageId, setCurrentPageId] = (0, import_react8.useState)(null);
   const commonProps = (0, import_react8.useMemo)(() => ({
@@ -2647,7 +2653,7 @@ function FFForm(props) {
     uploadMediaForField,
     deleteMediaItem,
     fetchMedia: props.onFetchMedia,
-    fetchLookupList: props.onFetchLookupList
+    fetchLookupList: props.onFetchLookupList ?? internalFetchLookupList
   }), [
     data,
     fieldStates,
@@ -2659,7 +2665,8 @@ function FFForm(props) {
     uploadMediaForField,
     deleteMediaItem,
     props.onFetchMedia,
-    props.onFetchLookupList
+    props.onFetchLookupList,
+    internalFetchLookupList
   ]);
   if (loading) {
     return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: `ff-form ff-form--loading ${className ?? ""}`, style, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "ff-form__loading", "aria-live": "polite", "aria-busy": "true", children: "Loading\u2026" }) });

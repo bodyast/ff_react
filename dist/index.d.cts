@@ -372,6 +372,7 @@ declare function useFFForm(props: FFFormProps): {
         url?: string;
     }>;
     deleteMediaItem: (mediaUuid: string) => Promise<void>;
+    fetchLookupList: (listId: string) => Promise<LookupList>;
 };
 
 type FormEngineParams = {
