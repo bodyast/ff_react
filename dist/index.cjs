@@ -2207,7 +2207,6 @@ function SignatureField({
   value,
   disabled,
   readonly,
-  required,
   onChange,
   uploadMedia,
   fetchMedia
@@ -2218,6 +2217,11 @@ function SignatureField({
   const [isEmpty2, setIsEmpty] = (0, import_react6.useState)(true);
   const [signatureUrl, setSignatureUrl] = (0, import_react6.useState)(null);
   const [isFetching, setIsFetching] = (0, import_react6.useState)(false);
+  const settings = field.settings ?? {};
+  const maxFiles = settings.maxFiles ?? settings.max_files;
+  const isArrayExpected = Boolean(
+    settings.allowMany ?? settings.allow_many ?? settings.isMultiple ?? settings.is_multiple ?? (maxFiles !== void 0 && maxFiles > 1)
+  );
   (0, import_react6.useEffect)(() => {
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
@@ -2226,30 +2230,27 @@ function SignatureField({
   (0, import_react6.useEffect)(() => {
     let cancelled = false;
     async function resolveUrl() {
-      if (!value) {
+      const normalized = normalizeValue(value);
+      if (!normalized) {
         setSignatureUrl(null);
         setIsEmpty(true);
         return;
       }
       setIsEmpty(false);
-      if (typeof value === "object" && value !== null) {
-        const valObj = value;
-        if (valObj.url) {
-          setSignatureUrl(valObj.url);
-          setIsFetching(false);
-          return;
-        }
+      if (normalized.url) {
+        setSignatureUrl(normalized.url);
+        setIsFetching(false);
+        return;
       }
-      const valStr = typeof value === "string" ? value : value?.uuid || value?.id || String(value);
-      if (valStr.startsWith("http") || valStr.startsWith("blob:") || valStr.startsWith("data:")) {
-        setSignatureUrl(valStr);
+      if (normalized.uuid.startsWith("http") || normalized.uuid.startsWith("blob:") || normalized.uuid.startsWith("data:")) {
+        setSignatureUrl(normalized.uuid);
         setIsFetching(false);
         return;
       }
       if (fetchMedia) {
         setIsFetching(true);
         try {
-          const result = await Promise.resolve(fetchMedia(valStr));
+          const result = await Promise.resolve(fetchMedia(normalized.uuid));
           if (cancelled) return;
           const resolved = normalizeFetchResult(result);
           if (resolved) setSignatureUrl(resolved);
@@ -2265,6 +2266,19 @@ function SignatureField({
       cancelled = true;
     };
   }, [value, fetchMedia]);
+  function normalizeValue(input) {
+    if (!input) return null;
+    const item = Array.isArray(input) ? input[0] : input;
+    if (!item) return null;
+    if (typeof item === "string") return { uuid: item };
+    if (typeof item === "object") {
+      const raw = item;
+      const uuid = raw.uuid || raw.fileUuid || raw.file_uuid || raw.id || raw.url;
+      const url = raw.url || raw.src || raw.href;
+      return uuid ? { uuid: String(uuid), url: url ? String(url) : void 0 } : null;
+    }
+    return null;
+  }
   function normalizeFetchResult(result) {
     if (!result) return null;
     if (typeof result === "string") return result;
@@ -2320,7 +2334,7 @@ function SignatureField({
   function clear() {
     setIsEmpty(true);
     setSignatureUrl(null);
-    onChange(void 0);
+    onChange(isArrayExpected ? [] : void 0);
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
@@ -2339,7 +2353,8 @@ function SignatureField({
       const file = new File([blob], "signature.png", { type: "image/png" });
       try {
         const result = await uploadMedia(file);
-        onChange(result);
+        const finalValue = isArrayExpected ? [result] : result;
+        onChange(finalValue);
       } catch (err) {
         console.error("Failed to upload signature", err);
       }
@@ -2356,7 +2371,7 @@ function SignatureField({
       "canvas",
       {
         ref: canvasRef,
-        width: 400,
+        width: 460,
         height: 200,
         className: "ff-form__signature-canvas",
         onMouseDown: startDrawing,

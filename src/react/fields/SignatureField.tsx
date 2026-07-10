@@ -6,7 +6,6 @@ export function SignatureField({
   value,
   disabled,
   readonly,
-  required,
   onChange,
   uploadMedia,
   fetchMedia,
@@ -17,6 +16,14 @@ export function SignatureField({
   const [isEmpty, setIsEmpty] = useState(true);
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+
+  const settings = field.settings ?? {};
+  const maxFiles = (settings.maxFiles ?? settings.max_files) as number | undefined;
+  const isArrayExpected = Boolean(
+    settings.allowMany ?? settings.allow_many ??
+    settings.isMultiple ?? settings.is_multiple ??
+    (maxFiles !== undefined && maxFiles > 1)
+  );
 
   // Clean up blob URL on unmount
   useEffect(() => {
@@ -29,7 +36,8 @@ export function SignatureField({
     let cancelled = false;
 
     async function resolveUrl() {
-      if (!value) {
+      const normalized = normalizeValue(value);
+      if (!normalized) {
         setSignatureUrl(null);
         setIsEmpty(true);
         return;
@@ -37,34 +45,25 @@ export function SignatureField({
 
       setIsEmpty(false);
 
-      // 1. If it's an object, check for url first, then uuid
-      if (typeof value === "object" && value !== null) {
-        const valObj = value as any;
-        if (valObj.url) {
-          setSignatureUrl(valObj.url);
-          setIsFetching(false);
-          return;
-        }
-
-        // If it's an object with only uuid, we'll fall through to fetchMedia
-      }
-
-      // 2. If it's a string that looks like a URL, use it
-      const valStr = typeof value === "string"
-        ? value
-        : (value as any)?.uuid || (value as any)?.id || String(value);
-
-      if (valStr.startsWith("http") || valStr.startsWith("blob:") || valStr.startsWith("data:")) {
-        setSignatureUrl(valStr);
+      // 1. Use URL if already present
+      if (normalized.url) {
+        setSignatureUrl(normalized.url);
         setIsFetching(false);
         return;
       }
 
-      // 3. Otherwise treat as UUID and fetch
+      // 2. If it's a direct link string
+      if (normalized.uuid.startsWith("http") || normalized.uuid.startsWith("blob:") || normalized.uuid.startsWith("data:")) {
+        setSignatureUrl(normalized.uuid);
+        setIsFetching(false);
+        return;
+      }
+
+      // 3. Otherwise treat as UUID and fetch via adapter
       if (fetchMedia) {
         setIsFetching(true);
         try {
-          const result = await Promise.resolve(fetchMedia(valStr));
+          const result = await Promise.resolve(fetchMedia(normalized.uuid));
           if (cancelled) return;
 
           const resolved = normalizeFetchResult(result);
@@ -80,6 +79,21 @@ export function SignatureField({
     resolveUrl();
     return () => { cancelled = true; };
   }, [value, fetchMedia]);
+
+  function normalizeValue(input: unknown): { uuid: string; url?: string } | null {
+    if (!input) return null;
+    const item = Array.isArray(input) ? input[0] : input;
+    if (!item) return null;
+
+    if (typeof item === "string") return { uuid: item };
+    if (typeof item === "object") {
+      const raw = item as any;
+      const uuid = raw.uuid || raw.fileUuid || raw.file_uuid || raw.id || raw.url;
+      const url = raw.url || raw.src || raw.href;
+      return uuid ? { uuid: String(uuid), url: url ? String(url) : undefined } : null;
+    }
+    return null;
+  }
 
   function normalizeFetchResult(result: MediaFetchResult): string | null {
     if (!result) return null;
@@ -145,7 +159,7 @@ export function SignatureField({
   function clear() {
     setIsEmpty(true);
     setSignatureUrl(null);
-    onChange(undefined);
+    onChange(isArrayExpected ? [] : undefined);
 
     const canvas = canvasRef.current;
     if (canvas) {
@@ -161,7 +175,6 @@ export function SignatureField({
     canvas.toBlob(async (blob) => {
       if (!blob) return;
 
-      // Local preview immediately
       const localUrl = URL.createObjectURL(blob);
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = localUrl;
@@ -170,9 +183,10 @@ export function SignatureField({
       const file = new File([blob], "signature.png", { type: "image/png" });
       try {
         const result = await uploadMedia(file);
-        // Sync with form state - backend might return just UUID or full object
-        // We pass the full result so that URL (if present) is kept
-        onChange(result);
+        // backend might return just UUID or full object
+        // Wrap in array if field expects it
+        const finalValue = isArrayExpected ? [result] : result;
+        onChange(finalValue);
       } catch (err) {
         console.error("Failed to upload signature", err);
       }
@@ -202,7 +216,7 @@ export function SignatureField({
     <div className="ff-form__signature-container">
       <canvas
         ref={canvasRef}
-        width={400}
+        width={460}
         height={200}
         className="ff-form__signature-canvas"
         onMouseDown={startDrawing}
