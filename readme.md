@@ -27,3 +27,7 @@ npm run playground -- --port 5174
   // ... інші пропси
 />
 ```
+
+```bash
+git add . && git commit -m "feat: ..." && git tag v1.0.6 && git push origin main --tags
+```

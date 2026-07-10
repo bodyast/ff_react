@@ -175,12 +175,17 @@ export function useFFForm(props: FFFormProps) {
     return adapter.deleteMedia({ apiBaseUrl, apiKey: key, submissionId, mediaUuid });
   }, [adapter, apiBaseUrl, getKey, submissionId]);
 
+  const fetchLookupList = useCallback(async (listId: string) => {
+    const key = await getKey();
+    return adapter.fetchLookupList({ apiBaseUrl, apiKey: key, listId });
+  }, [adapter, apiBaseUrl, getKey]);
+
   return {
     loading: state.loading, error: state.error, schema: state.schema,
     data: state.data, fieldStates: state.fieldStates, validationErrors: state.validationErrors,
     changeField, submitDraft, submitFinal, reset, reload,
     isVisible, isDisabled, isReadonly, isRequired,
-    uploadMediaForField, deleteMediaItem,
+    uploadMediaForField, deleteMediaItem, fetchLookupList,
   };
 }
 

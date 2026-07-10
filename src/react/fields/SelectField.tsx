@@ -38,7 +38,8 @@ export function SelectField({
         .then((res) => {
           if (settled) return;
           settled = true;
-          const items = res?.data?.items || [];
+          // res might be the unwrapped LookupList or still have a .data wrapper
+          const items = (res?.data?.items || res?.items || []) as any[];
           const labelKey = (source?.label as string) || "label";
           const valueKey = (source?.value as string) || "value";
           const mapped: FormFieldOption[] = items.map((item: any) => ({

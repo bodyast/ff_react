@@ -33,6 +33,7 @@ export function FFForm(props: FFFormProps) {
     submitFinal,
     uploadMediaForField,
     deleteMediaItem,
+    fetchLookupList: internalFetchLookupList,
   } = useFFForm(props);
 
   const [currentPageId, setCurrentPageId] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export function FFForm(props: FFFormProps) {
     uploadMediaForField,
     deleteMediaItem,
     fetchMedia: props.onFetchMedia,
-    fetchLookupList: props.onFetchLookupList,
+    fetchLookupList: props.onFetchLookupList ?? internalFetchLookupList,
   }), [
     data,
     fieldStates,
@@ -64,6 +65,7 @@ export function FFForm(props: FFFormProps) {
     deleteMediaItem,
     props.onFetchMedia,
     props.onFetchLookupList,
+    internalFetchLookupList,
   ]);
 
   // --------------------------------------------------------------------------
