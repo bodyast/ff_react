@@ -37,16 +37,26 @@ export function SignatureField({
 
       setIsEmpty(false);
 
-      // 1. If it's an object with a URL, use it
-      if (typeof value === "object" && (value as any).url) {
-        setSignatureUrl((value as any).url);
-        return;
+      // 1. If it's an object, check for url first, then uuid
+      if (typeof value === "object" && value !== null) {
+        const valObj = value as any;
+        if (valObj.url) {
+          setSignatureUrl(valObj.url);
+          setIsFetching(false);
+          return;
+        }
+
+        // If it's an object with only uuid, we'll fall through to fetchMedia
       }
 
       // 2. If it's a string that looks like a URL, use it
-      const valStr = String(typeof value === "object" && (value as any).uuid ? (value as any).uuid : value);
+      const valStr = typeof value === "string"
+        ? value
+        : (value as any)?.uuid || (value as any)?.id || String(value);
+
       if (valStr.startsWith("http") || valStr.startsWith("blob:") || valStr.startsWith("data:")) {
         setSignatureUrl(valStr);
+        setIsFetching(false);
         return;
       }
 
@@ -161,7 +171,8 @@ export function SignatureField({
       try {
         const result = await uploadMedia(file);
         // Sync with form state - backend might return just UUID or full object
-        onChange(result.uuid || result.url || result);
+        // We pass the full result so that URL (if present) is kept
+        onChange(result);
       } catch (err) {
         console.error("Failed to upload signature", err);
       }

@@ -2193,13 +2193,18 @@ function SignatureField({
         return;
       }
       setIsEmpty(false);
-      if (typeof value === "object" && value.url) {
-        setSignatureUrl(value.url);
-        return;
+      if (typeof value === "object" && value !== null) {
+        const valObj = value;
+        if (valObj.url) {
+          setSignatureUrl(valObj.url);
+          setIsFetching(false);
+          return;
+        }
       }
-      const valStr = String(typeof value === "object" && value.uuid ? value.uuid : value);
+      const valStr = typeof value === "string" ? value : value?.uuid || value?.id || String(value);
       if (valStr.startsWith("http") || valStr.startsWith("blob:") || valStr.startsWith("data:")) {
         setSignatureUrl(valStr);
+        setIsFetching(false);
         return;
       }
       if (fetchMedia) {
@@ -2295,7 +2300,7 @@ function SignatureField({
       const file = new File([blob], "signature.png", { type: "image/png" });
       try {
         const result = await uploadMedia(file);
-        onChange(result.uuid || result.url || result);
+        onChange(result);
       } catch (err) {
         console.error("Failed to upload signature", err);
       }
