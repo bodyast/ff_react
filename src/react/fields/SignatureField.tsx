@@ -93,7 +93,12 @@ export function SignatureField({
       const file = new File([blob], "signature.png", { type: "image/png" });
       try {
         const result = await uploadMedia(file);
-        onChange(result.uuid || result.url);
+        // Ensure we take the URL from the response if provided,
+        // otherwise try to use the result itself if it's a string
+        const newUrl = result.url || (typeof result === 'string' ? result : null);
+        if (newUrl) setSignatureUrl(newUrl);
+
+        onChange(result.uuid || result.url || result);
       } catch (err) {
         console.error("Failed to upload signature", err);
       }
