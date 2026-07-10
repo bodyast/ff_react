@@ -2,12 +2,12 @@ import type { ApiAdapter, ApiAdapterConfig, ResolvedApiAdapter } from "../types/
 import type { FormStructure, FormSubmission, LookupList, FormSubmissionPayload } from "../types/form";
 
 const ENDPOINTS = {
-  formStructure: (id: string) => `client/forms/${id}`,
-  submission:    (id: string) => `client/submissions/${id}`,
-  submissions:   ()           => `client/submissions`,
-  media:         (sid: string) => `client/submissions/${sid}/media`,
-  mediaItem:     (sid: string, mid: string) => `client/submissions/${sid}/media/${mid}`,
-  lookup:        (id: string) => `client/lookup-lists/${id}`,
+  formStructure: (id: string) => `v1/form_flex/proxy/forms/${id}`,
+  submission:    (id: string) => `v1/form_flex/proxy/submissions/${id}`,
+  submissions:   ()           => `v1/form_flex/proxy/submissions`,
+  media:         (sid: string) => `v1/form_flex/proxy/submissions/${sid}/media`,
+  mediaItem:     (sid: string, mid: string) => `v1/form_flex/proxy/submissions/${sid}/media/${mid}`,
+  lookup:        (id: string) => `v1/form_flex/proxy/lookup-lists/${id}`,
 } as const;
 
 function buildUrl(base: string | undefined, proxy: string | undefined, path: string): string {
