@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import type { FieldRendererProps } from "../../types/props";
+import type { FieldRendererProps, MediaFetchResult } from "../../types/props";
 
 export function SignatureField({
   field,
@@ -9,23 +9,84 @@ export function SignatureField({
   required,
   onChange,
   uploadMedia,
+  fetchMedia,
 }: FieldRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(!value);
-  const [signatureUrl, setSignatureUrl] = useState<string | null>(
-    typeof value === "string" ? value : (value as any)?.url || null
-  );
+  const [isEmpty, setIsEmpty] = useState(true);
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+
+  // Clean up blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    };
+  }, []);
 
   useEffect(() => {
-    if (typeof value === "string") setSignatureUrl(value);
-    else if (value && typeof value === "object" && "url" in value) {
-      setSignatureUrl((value as any).url);
-    } else {
-      setSignatureUrl(null);
+    let cancelled = false;
+
+    async function resolveUrl() {
+      if (!value) {
+        setSignatureUrl(null);
+        setIsEmpty(true);
+        return;
+      }
+
+      setIsEmpty(false);
+
+      // 1. If it's an object with a URL, use it
+      if (typeof value === "object" && (value as any).url) {
+        setSignatureUrl((value as any).url);
+        return;
+      }
+
+      // 2. If it's a string that looks like a URL, use it
+      const valStr = String(typeof value === "object" && (value as any).uuid ? (value as any).uuid : value);
+      if (valStr.startsWith("http") || valStr.startsWith("blob:") || valStr.startsWith("data:")) {
+        setSignatureUrl(valStr);
+        return;
+      }
+
+      // 3. Otherwise treat as UUID and fetch
+      if (fetchMedia) {
+        setIsFetching(true);
+        try {
+          const result = await Promise.resolve(fetchMedia(valStr));
+          if (cancelled) return;
+
+          const resolved = normalizeFetchResult(result);
+          if (resolved) setSignatureUrl(resolved);
+        } catch (err) {
+          console.error("Failed to fetch signature media", err);
+        } finally {
+          if (!cancelled) setIsFetching(false);
+        }
+      }
     }
-    setIsEmpty(!value);
-  }, [value]);
+
+    resolveUrl();
+    return () => { cancelled = true; };
+  }, [value, fetchMedia]);
+
+  function normalizeFetchResult(result: MediaFetchResult): string | null {
+    if (!result) return null;
+    if (typeof result === "string") return result;
+    if (result instanceof Blob) {
+      const url = URL.createObjectURL(result);
+      objectUrlRef.current = url;
+      return url;
+    }
+    const blob = result.blob ?? result.file;
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      objectUrlRef.current = url;
+      return result.url ?? url;
+    }
+    return result.url ?? null;
+  }
 
   function startDrawing(e: React.MouseEvent | React.TouchEvent) {
     if (disabled || readonly) return;
@@ -38,7 +99,7 @@ export function SignatureField({
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
-      ctx?.beginPath(); // reset path
+      ctx?.beginPath();
     }
   }
 
@@ -76,7 +137,6 @@ export function SignatureField({
     setSignatureUrl(null);
     onChange(undefined);
 
-    // If we're in the drawing state, clear the canvas
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
@@ -90,14 +150,17 @@ export function SignatureField({
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
+
+      // Local preview immediately
+      const localUrl = URL.createObjectURL(blob);
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = localUrl;
+      setSignatureUrl(localUrl);
+
       const file = new File([blob], "signature.png", { type: "image/png" });
       try {
         const result = await uploadMedia(file);
-        // Ensure we take the URL from the response if provided,
-        // otherwise try to use the result itself if it's a string
-        const newUrl = result.url || (typeof result === 'string' ? result : null);
-        if (newUrl) setSignatureUrl(newUrl);
-
+        // Sync with form state - backend might return just UUID or full object
         onChange(result.uuid || result.url || result);
       } catch (err) {
         console.error("Failed to upload signature", err);
@@ -105,10 +168,14 @@ export function SignatureField({
     }, "image/png");
   }
 
-  if (signatureUrl && (disabled || readonly || !isDrawing)) {
+  if (signatureUrl && !isDrawing) {
     return (
       <div className="ff-form__signature-preview">
-        <img src={signatureUrl} alt="Signature" />
+        {isFetching ? (
+          <div className="ff-form__signature-loading">Loading signature...</div>
+        ) : (
+          <img src={signatureUrl} alt="Signature" />
+        )}
         {!disabled && !readonly && (
           <div className="ff-form__signature-actions" style={{ marginTop: 8 }}>
             <button type="button" className="ff-form__btn ff-form__btn--draft" onClick={clear}>

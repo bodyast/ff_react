@@ -2209,23 +2209,73 @@ function SignatureField({
   readonly,
   required,
   onChange,
-  uploadMedia
+  uploadMedia,
+  fetchMedia
 }) {
   const canvasRef = (0, import_react6.useRef)(null);
+  const objectUrlRef = (0, import_react6.useRef)(null);
   const [isDrawing, setIsDrawing] = (0, import_react6.useState)(false);
-  const [isEmpty2, setIsEmpty] = (0, import_react6.useState)(!value);
-  const [signatureUrl, setSignatureUrl] = (0, import_react6.useState)(
-    typeof value === "string" ? value : value?.url || null
-  );
+  const [isEmpty2, setIsEmpty] = (0, import_react6.useState)(true);
+  const [signatureUrl, setSignatureUrl] = (0, import_react6.useState)(null);
+  const [isFetching, setIsFetching] = (0, import_react6.useState)(false);
   (0, import_react6.useEffect)(() => {
-    if (typeof value === "string") setSignatureUrl(value);
-    else if (value && typeof value === "object" && "url" in value) {
-      setSignatureUrl(value.url);
-    } else {
-      setSignatureUrl(null);
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    };
+  }, []);
+  (0, import_react6.useEffect)(() => {
+    let cancelled = false;
+    async function resolveUrl() {
+      if (!value) {
+        setSignatureUrl(null);
+        setIsEmpty(true);
+        return;
+      }
+      setIsEmpty(false);
+      if (typeof value === "object" && value.url) {
+        setSignatureUrl(value.url);
+        return;
+      }
+      const valStr = String(typeof value === "object" && value.uuid ? value.uuid : value);
+      if (valStr.startsWith("http") || valStr.startsWith("blob:") || valStr.startsWith("data:")) {
+        setSignatureUrl(valStr);
+        return;
+      }
+      if (fetchMedia) {
+        setIsFetching(true);
+        try {
+          const result = await Promise.resolve(fetchMedia(valStr));
+          if (cancelled) return;
+          const resolved = normalizeFetchResult(result);
+          if (resolved) setSignatureUrl(resolved);
+        } catch (err) {
+          console.error("Failed to fetch signature media", err);
+        } finally {
+          if (!cancelled) setIsFetching(false);
+        }
+      }
     }
-    setIsEmpty(!value);
-  }, [value]);
+    resolveUrl();
+    return () => {
+      cancelled = true;
+    };
+  }, [value, fetchMedia]);
+  function normalizeFetchResult(result) {
+    if (!result) return null;
+    if (typeof result === "string") return result;
+    if (result instanceof Blob) {
+      const url = URL.createObjectURL(result);
+      objectUrlRef.current = url;
+      return url;
+    }
+    const blob = result.blob ?? result.file;
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      objectUrlRef.current = url;
+      return result.url ?? url;
+    }
+    return result.url ?? null;
+  }
   function startDrawing(e) {
     if (disabled || readonly) return;
     setIsDrawing(true);
@@ -2277,20 +2327,22 @@ function SignatureField({
     if (!canvas || isEmpty2 || !uploadMedia) return;
     canvas.toBlob(async (blob) => {
       if (!blob) return;
+      const localUrl = URL.createObjectURL(blob);
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = localUrl;
+      setSignatureUrl(localUrl);
       const file = new File([blob], "signature.png", { type: "image/png" });
       try {
         const result = await uploadMedia(file);
-        const newUrl = result.url || (typeof result === "string" ? result : null);
-        if (newUrl) setSignatureUrl(newUrl);
         onChange(result.uuid || result.url || result);
       } catch (err) {
         console.error("Failed to upload signature", err);
       }
     }, "image/png");
   }
-  if (signatureUrl && (disabled || readonly || !isDrawing)) {
+  if (signatureUrl && !isDrawing) {
     return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "ff-form__signature-preview", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("img", { src: signatureUrl, alt: "Signature" }),
+      isFetching ? /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "ff-form__signature-loading", children: "Loading signature..." }) : /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("img", { src: signatureUrl, alt: "Signature" }),
       !disabled && !readonly && /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "ff-form__signature-actions", style: { marginTop: 8 }, children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { type: "button", className: "ff-form__btn ff-form__btn--draft", onClick: clear, children: "Clear & Re-sign" }) })
     ] });
   }
