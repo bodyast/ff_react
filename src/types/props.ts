@@ -48,6 +48,7 @@ export type FieldRendererProps = {
   uploadMediaForField?: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMedia?: (mediaUuid: string) => Promise<void>;
   fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
+  fetchLookupList?: (listId: string) => Promise<any>;
 
   /** Parent form schema — allows subform fields to resolve their nested schema */
   parentSchema?: FormStructure;
@@ -141,4 +142,8 @@ export type FFFormProps = {
    * May return a direct URL, Blob/File, or an object with { url, blob/file, mimeType, name }.
    */
   onFetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
+  /**
+   * Custom lookup list fetch handler.
+   */
+  onFetchLookupList?: (listId: string) => Promise<any>;
 };

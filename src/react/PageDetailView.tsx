@@ -19,6 +19,7 @@ type PageDetailViewProps = {
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
   fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
+  fetchLookupList?: (listId: string) => Promise<any>;
 };
 
 export function PageDetailView({
@@ -38,6 +39,7 @@ export function PageDetailView({
   uploadMediaForField,
   deleteMediaItem,
   fetchMedia,
+  fetchLookupList,
 }: PageDetailViewProps) {
   return (
     <div className="ff-form__page-detail">
@@ -77,6 +79,7 @@ export function PageDetailView({
         uploadMediaForField={uploadMediaForField}
         deleteMediaItem={deleteMediaItem}
         fetchMedia={fetchMedia}
+        fetchLookupList={fetchLookupList}
       />
 
       {/* Page prev/next */}

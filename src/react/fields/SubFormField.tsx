@@ -72,6 +72,7 @@ export function SubFormField({
   uploadMediaForField,
   deleteMedia,
   fetchMedia,
+  fetchLookupList,
   renderers,
 }: FieldRendererProps) {
   const settings = field.settings ?? {};
@@ -261,6 +262,7 @@ export function SubFormField({
                     }
                     deleteMediaItem={safeDeleteMedia}
                     fetchMedia={fetchMedia}
+                    fetchLookupList={fetchLookupList}
                   />
                 </div>
               )}

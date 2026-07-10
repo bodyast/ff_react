@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import type { FormStructure, FormSubmissionPayload } from "@iqtechnology/ff-forms-react";
 
 // ---------------------------------------------------------------------------
@@ -21,12 +21,34 @@ export default function App() {
     ]);
   }
 
-  async function handleUploadMedia(file: File, fieldId: string) {
+  const handleUploadMedia = useCallback(async (file: File, fieldId: string) => {
     setLog((prev) => [`[${new Date().toLocaleTimeString()}] Upload: ${file.name} (field: ${fieldId})`, ...prev]);
     // Simulate upload — replace with real logic
     await new Promise((r) => setTimeout(r, 500));
     return { url: URL.createObjectURL(file) };
-  }
+  }, []);
+
+  const handleFetchLookupList = useCallback(async (listId: string) => {
+    setLog((prev) => [`[${new Date().toLocaleTimeString()}] Fetch lookup: ${listId}`, ...prev]);
+    // Simulate lookup response
+    await new Promise((r) => setTimeout(r, 500));
+
+    if (listId === "019f3233-db15-7393-93af-8fe82e27707a") {
+      return {
+        data: {
+          uuid: listId,
+          items: [
+            { id: "1059", name: "Ap Electrical Ltd" },
+            { id: "1260", name: "Bob Tractors" },
+            { id: "726", name: "Charlie Construction" },
+            { id: "452", name: "Contractor Co ABC" },
+            { id: "455", name: "Contractor Co QWE" },
+          ],
+        },
+      };
+    }
+    return { data: { uuid: listId, items: [] } };
+  }, []);
 
   return (
     <div style={{ display: "flex", gap: 24, padding: 24, fontFamily: "sans-serif" }}>
@@ -39,6 +61,7 @@ export default function App() {
           onFetchMedia={(fileUuid) => {
             console.log("Fetching media for submission:", fileUuid);
           }}
+          onFetchLookupList={handleFetchLookupList}
         />
       </div>
 

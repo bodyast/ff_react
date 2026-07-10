@@ -12,6 +12,7 @@ import { ChoiceField } from "./fields/ChoiceField";
 import { PlaceholderField } from "./fields/PlaceholderField";
 import { ButtonField } from "./fields/ButtonField";
 import { LocationField } from "./fields/LocationField";
+import { SignatureField } from "./fields/SignatureField";
 
 // ---------------------------------------------------------------------------
 // Default renderer registry
@@ -29,6 +30,7 @@ const DEFAULT_RENDERERS: FieldRenderers = {
   file: MediaField,
   image: MediaField,
   media: MediaField,
+  signature: SignatureField,
   choice: ChoiceField,
   placeholder: PlaceholderField,
   button: ButtonField,
@@ -61,7 +63,14 @@ export function FieldRenderer(props: FieldRendererProps) {
     ...DEFAULT_RENDERERS,
     ...(renderers as FieldRenderers),
   };
-  const Component = registry[field.type];
+
+  // Special case: media field with type=signature in settings
+  let fieldType = field.type;
+  if (fieldType === "media" && field.settings?.type === "signature") {
+    fieldType = "signature";
+  }
+
+  const Component = registry[fieldType];
   if (!Component) return <FallbackField field={field} />;
   return <Component {...props} />;
 }

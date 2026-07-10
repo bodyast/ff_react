@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { FFFormProps } from "../types/props";
 import { useFFForm } from "./useFFForm";
 import { PageListView } from "./PageListView";
@@ -38,6 +38,35 @@ export function FFForm(props: FFFormProps) {
   const [currentPageId, setCurrentPageId] = useState<string | null>(null);
 
   // --------------------------------------------------------------------------
+  // Shared field change & media handlers
+  // --------------------------------------------------------------------------
+  const commonProps = useMemo(() => ({
+    data,
+    fieldStates,
+    validationErrors,
+    mode,
+    renderers,
+    parentSchema: schema ?? undefined,
+    onFieldChange: changeField,
+    uploadMediaForField,
+    deleteMediaItem,
+    fetchMedia: props.onFetchMedia,
+    fetchLookupList: props.onFetchLookupList,
+  }), [
+    data,
+    fieldStates,
+    validationErrors,
+    mode,
+    renderers,
+    schema,
+    changeField,
+    uploadMediaForField,
+    deleteMediaItem,
+    props.onFetchMedia,
+    props.onFetchLookupList,
+  ]);
+
+  // --------------------------------------------------------------------------
   // Loading
   // --------------------------------------------------------------------------
   if (loading) {
@@ -75,22 +104,6 @@ export function FFForm(props: FFFormProps) {
     ? pages.find((p) => p.id === currentPageId) ?? null
     : null;
   const currentPageIndex = currentPage ? pages.indexOf(currentPage) : -1;
-
-  // --------------------------------------------------------------------------
-  // Shared field change & media handlers
-  // --------------------------------------------------------------------------
-  const commonProps = {
-    data,
-    fieldStates,
-    validationErrors,
-    mode,
-    renderers,
-    parentSchema: schema,
-    onFieldChange: changeField,
-    uploadMediaForField,
-    deleteMediaItem,
-    fetchMedia: props.onFetchMedia,
-  };
 
   // --------------------------------------------------------------------------
   // Render

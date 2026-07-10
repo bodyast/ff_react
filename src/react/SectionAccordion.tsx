@@ -15,6 +15,7 @@ type SectionAccordionProps = {
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
   fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
+  fetchLookupList?: (listId: string) => Promise<any>;
 };
 
 export function SectionAccordion({
@@ -29,6 +30,7 @@ export function SectionAccordion({
   uploadMediaForField,
   deleteMediaItem,
   fetchMedia,
+  fetchLookupList,
 }: SectionAccordionProps) {
   // First section is expanded by default (matches Flutter behaviour)
   const [, setExpanded] = useState<Set<string>>(
@@ -129,6 +131,7 @@ export function SectionAccordion({
                   uploadMediaForField={uploadMediaForField}
                   deleteMediaItem={deleteMediaItem}
                   fetchMedia={fetchMedia}
+                  fetchLookupList={fetchLookupList}
                 />
               </div>
             )}

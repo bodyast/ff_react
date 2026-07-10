@@ -291,6 +291,19 @@ select[multiple].ff-form__select { background-image: none; padding-right: .75rem
 .ff-form__media-viewer-link:hover { text-decoration: underline; }
 .ff-form__select-loading { font-size: .875rem; color: #6b7280; padding: .5rem 0; }
 
+/* -------------------------------------------------------------------------- Signature */
+.ff-form__signature-container { display: flex; flex-direction: column; gap: .75rem; }
+.ff-form__signature-canvas {
+  width: 100%; max-width: 460px; height: 200px;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+  touch-action: none; cursor: crosshair;
+}
+.ff-form__signature-preview img {
+  display: block; width: 100%; max-width: 460px;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+}
+.ff-form__signature-actions { display: flex; gap: .5rem; }
+
 /* -------------------------------------------------------------------------- Location */
 .ff-form__location { display: flex; flex-direction: column; gap: .375rem; }
 .ff-form__location-row { display: flex; gap: .5rem; align-items: center; }

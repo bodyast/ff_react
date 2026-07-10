@@ -14,6 +14,7 @@ type SectionRendererProps = {
   uploadMediaForField: (fieldId: string, file: File) => Promise<{ uuid?: string; url?: string }>;
   deleteMediaItem: (mediaUuid: string) => Promise<void>;
   fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
+  fetchLookupList?: (listId: string) => Promise<any>;
 };
 
 export function SectionRenderer({
@@ -28,6 +29,7 @@ export function SectionRenderer({
   uploadMediaForField,
   deleteMediaItem,
   fetchMedia,
+  fetchLookupList,
 }: SectionRendererProps) {
   const visibleFields = section.fields.filter(
     (f) => !fieldStates[f.id]?.hidden
@@ -44,8 +46,10 @@ export function SectionRenderer({
         const isRequired = state?.required ?? false;
         const errors = validationErrors[field.id];
 
+        const settings = field.settings ?? {};
+        const showLabel = settings.label !== false;
         const isLabelless =
-          field.type === "placeholder" || field.type === "button";
+          field.type === "placeholder" || field.type === "button" || !showLabel;
 
         return (
           <div
@@ -88,6 +92,7 @@ export function SectionRenderer({
               uploadMediaForField={uploadMediaForField}
               deleteMedia={deleteMediaItem}
               fetchMedia={fetchMedia}
+              fetchLookupList={fetchLookupList}
             />
 
             {errors?.map((msg, i) => (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { ChangeEvent } from "react";
 import type { FieldRendererProps } from "../../types/props";
 import type { FormFieldOption } from "../../types/form";
@@ -10,6 +10,7 @@ export function SelectField({
   readonly,
   required,
   onChange,
+  fetchLookupList,
 }: FieldRendererProps) {
   const settings = field.settings ?? {};
   const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
@@ -19,14 +20,41 @@ export function SelectField({
     [];
   const [options, setOptions] = useState<FormFieldOption[]>(staticOptions);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const fetchedIdRef = useRef<string | null>(null);
 
   // Load lookup list if no static options and source is defined
   useEffect(() => {
-    const sourceId = settings.source?.id ?? settings.source?.listId;
-    if (staticOptions.length > 0 || !sourceId) return;
+    const source = settings.source;
+    const sourceId = (source?.id ?? source?.listId) as string | undefined;
+
+    if (staticOptions.length > 0 || !sourceId || fetchedIdRef.current === sourceId) return;
 
     setLookupLoading(true);
+    fetchedIdRef.current = sourceId;
     let settled = false;
+
+    if (fetchLookupList) {
+      fetchLookupList(sourceId)
+        .then((res) => {
+          if (settled) return;
+          settled = true;
+          const items = res?.data?.items || [];
+          const labelKey = (source?.label as string) || "label";
+          const valueKey = (source?.value as string) || "value";
+          const mapped: FormFieldOption[] = items.map((item: any) => ({
+            label: String(item[labelKey] ?? ""),
+            value: String(item[valueKey] ?? ""),
+          }));
+          setOptions(mapped);
+          setLookupLoading(false);
+        })
+        .catch(() => {
+          if (settled) return;
+          settled = true;
+          setLookupLoading(false);
+        });
+      return;
+    }
 
     const timeout = setTimeout(() => {
       if (!settled) { settled = true; setLookupLoading(false); }
@@ -55,7 +83,7 @@ export function SelectField({
     document.dispatchEvent(event);
 
     return () => { settled = true; clearTimeout(timeout); };
-  }, [field.id, settings.source?.id, settings.source?.listId, staticOptions.length]);
+  }, [field.id, settings.source, staticOptions.length, fetchLookupList]);
 
   const selectedValues = Array.isArray(value)
     ? (value as (string | number)[]).map(String)

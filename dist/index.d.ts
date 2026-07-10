@@ -75,11 +75,13 @@ type FormFieldSettings = {
     [key: string]: unknown;
 };
 type FormFieldSource = {
-    type?: "lookup" | "api" | string;
+    type?: "lookup" | "api" | "list" | string;
     id?: string;
     listId?: string;
     url?: string;
-    filters?: FormFieldSourceFilter[];
+    value?: string;
+    label?: string;
+    filters?: FormFieldSourceFilter[] | null;
     [key: string]: unknown;
 };
 type FormFieldSourceFilter = {
@@ -260,6 +262,7 @@ type FieldRendererProps = {
     }>;
     deleteMedia?: (mediaUuid: string) => Promise<void>;
     fetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
+    fetchLookupList?: (listId: string) => Promise<any>;
     /** Parent form schema — allows subform fields to resolve their nested schema */
     parentSchema?: FormStructure;
     /** Full validation errors map — used by subforms to show nested field errors */
@@ -332,6 +335,10 @@ type FFFormProps = {
      * May return a direct URL, Blob/File, or an object with { url, blob/file, mimeType, name }.
      */
     onFetchMedia?: (mediaUuid: string) => MediaFetchResult | Promise<MediaFetchResult>;
+    /**
+     * Custom lookup list fetch handler.
+     */
+    onFetchLookupList?: (listId: string) => Promise<any>;
 };
 
 /**

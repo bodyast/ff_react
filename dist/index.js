@@ -1,5 +1,5 @@
 // src/react/FFForm.tsx
-import { useState as useState6 } from "react";
+import { useState as useState7, useMemo as useMemo2 } from "react";
 
 // src/react/useFFForm.ts
 import { useCallback, useEffect, useReducer, useRef } from "react";
@@ -1020,7 +1020,7 @@ function PageListView({
 }
 
 // src/react/SectionAccordion.tsx
-import { useState as useState5 } from "react";
+import { useState as useState6 } from "react";
 
 // src/react/fields/TextField.tsx
 import { jsx as jsx2 } from "react/jsx-runtime";
@@ -1163,7 +1163,7 @@ function NumberField({
 }
 
 // src/react/fields/SelectField.tsx
-import { useEffect as useEffect2, useState } from "react";
+import { useEffect as useEffect2, useState, useRef as useRef2 } from "react";
 import { jsx as jsx5, jsxs as jsxs3 } from "react/jsx-runtime";
 function SelectField({
   field,
@@ -1171,18 +1171,42 @@ function SelectField({
   disabled,
   readonly,
   required,
-  onChange
+  onChange,
+  fetchLookupList
 }) {
   const settings = field.settings ?? {};
   const isMultiple = Boolean(settings.isMultiple ?? settings.is_multiple ?? settings.allowMany ?? settings.allow_many);
   const staticOptions = (field.options?.length ? field.options : void 0) ?? settings.options ?? [];
   const [options, setOptions] = useState(staticOptions);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const fetchedIdRef = useRef2(null);
   useEffect2(() => {
-    const sourceId = settings.source?.id ?? settings.source?.listId;
-    if (staticOptions.length > 0 || !sourceId) return;
+    const source = settings.source;
+    const sourceId = source?.id ?? source?.listId;
+    if (staticOptions.length > 0 || !sourceId || fetchedIdRef.current === sourceId) return;
     setLookupLoading(true);
+    fetchedIdRef.current = sourceId;
     let settled = false;
+    if (fetchLookupList) {
+      fetchLookupList(sourceId).then((res) => {
+        if (settled) return;
+        settled = true;
+        const items = res?.data?.items || [];
+        const labelKey = source?.label || "label";
+        const valueKey = source?.value || "value";
+        const mapped = items.map((item) => ({
+          label: String(item[labelKey] ?? ""),
+          value: String(item[valueKey] ?? "")
+        }));
+        setOptions(mapped);
+        setLookupLoading(false);
+      }).catch(() => {
+        if (settled) return;
+        settled = true;
+        setLookupLoading(false);
+      });
+      return;
+    }
     const timeout = setTimeout(() => {
       if (!settled) {
         settled = true;
@@ -1214,7 +1238,7 @@ function SelectField({
       settled = true;
       clearTimeout(timeout);
     };
-  }, [field.id, settings.source?.id, settings.source?.listId, staticOptions.length]);
+  }, [field.id, settings.source, staticOptions.length, fetchLookupList]);
   const selectedValues = Array.isArray(value) ? value.map(String) : value !== void 0 && value !== null ? [String(value)] : [];
   function handleChange(e) {
     if (isMultiple) {
@@ -1337,17 +1361,22 @@ function CheckboxField({
 // src/react/fields/DateField.tsx
 import { jsx as jsx7 } from "react/jsx-runtime";
 function DateField({ field, value, disabled, readonly, required, onChange }) {
+  const settings = field.settings ?? {};
+  const displayFormat = settings.displayFormat ?? settings.display_format;
+  const isTimeOnly = displayFormat === "H:i";
   const includeTime = field.type === "datetime";
   function toInputValue(v) {
     if (!v) return "";
     const s = String(v);
+    if (isTimeOnly) return s.length > 5 ? s.slice(11, 16) : s;
     return includeTime ? s.slice(0, 16) : s.slice(0, 10);
   }
+  const inputType = isTimeOnly ? "time" : includeTime ? "datetime-local" : "date";
   return /* @__PURE__ */ jsx7(
     "input",
     {
       id: field.id,
-      type: includeTime ? "datetime-local" : "date",
+      type: inputType,
       className: "ff-form__input ff-form__input--date",
       value: toInputValue(value),
       disabled,
@@ -1360,7 +1389,7 @@ function DateField({ field, value, disabled, readonly, required, onChange }) {
 }
 
 // src/react/fields/MediaField.tsx
-import { useEffect as useEffect3, useRef as useRef2, useState as useState2 } from "react";
+import { useEffect as useEffect3, useRef as useRef3, useState as useState2 } from "react";
 import { Fragment, jsx as jsx8, jsxs as jsxs5 } from "react/jsx-runtime";
 function MediaField({
   field,
@@ -1373,9 +1402,9 @@ function MediaField({
   deleteMedia,
   fetchMedia
 }) {
-  const inputRef = useRef2(null);
-  const objectUrlsRef = useRef2([]);
-  const requestedFetchesRef = useRef2(/* @__PURE__ */ new Set());
+  const inputRef = useRef3(null);
+  const objectUrlsRef = useRef3([]);
+  const requestedFetchesRef = useRef3(/* @__PURE__ */ new Set());
   const [uploadErrors, setUploadErrors] = useState2([]);
   const [fetchErrors, setFetchErrors] = useState2({});
   const [fetchingMedia, setFetchingMedia] = useState2({});
@@ -1734,6 +1763,7 @@ function SubFormField({
   uploadMediaForField,
   deleteMedia,
   fetchMedia,
+  fetchLookupList,
   renderers
 }) {
   const settings = field.settings ?? {};
@@ -1868,7 +1898,8 @@ function SubFormField({
               onFieldChange: (fId, val) => updateEntry(idx, fId, val),
               uploadMediaForField: (fId, file) => safeUploadForField(buildNestedFieldPath(idx, fId), file),
               deleteMediaItem: safeDeleteMedia,
-              fetchMedia
+              fetchMedia,
+              fetchLookupList
             }
           ) })
         ] }, idx);
@@ -2124,8 +2155,125 @@ function LocationField({
   ] });
 }
 
-// src/react/FieldRenderer.tsx
+// src/react/fields/SignatureField.tsx
+import { useRef as useRef4, useState as useState5, useEffect as useEffect4 } from "react";
 import { jsx as jsx14, jsxs as jsxs8 } from "react/jsx-runtime";
+function SignatureField({
+  field,
+  value,
+  disabled,
+  readonly,
+  required,
+  onChange,
+  uploadMedia
+}) {
+  const canvasRef = useRef4(null);
+  const [isDrawing, setIsDrawing] = useState5(false);
+  const [isEmpty2, setIsEmpty] = useState5(!value);
+  const [signatureUrl, setSignatureUrl] = useState5(
+    typeof value === "string" ? value : value?.url || null
+  );
+  useEffect4(() => {
+    if (typeof value === "string") setSignatureUrl(value);
+    else if (value && typeof value === "object" && "url" in value) {
+      setSignatureUrl(value.url);
+    } else {
+      setSignatureUrl(null);
+    }
+    setIsEmpty(!value);
+  }, [value]);
+  function startDrawing(e) {
+    if (disabled || readonly) return;
+    setIsDrawing(true);
+    draw(e);
+  }
+  function stopDrawing() {
+    setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctx?.beginPath();
+    }
+  }
+  function draw(e) {
+    if (!isDrawing || !canvasRef.current || disabled || readonly) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+    if ("touches" in e) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#000";
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsEmpty(false);
+  }
+  function clear() {
+    setIsEmpty(true);
+    setSignatureUrl(null);
+    onChange(void 0);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+  async function save() {
+    const canvas = canvasRef.current;
+    if (!canvas || isEmpty2 || !uploadMedia) return;
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], "signature.png", { type: "image/png" });
+      try {
+        const result = await uploadMedia(file);
+        onChange(result.uuid || result.url);
+      } catch (err) {
+        console.error("Failed to upload signature", err);
+      }
+    }, "image/png");
+  }
+  if (signatureUrl && (disabled || readonly || !isDrawing)) {
+    return /* @__PURE__ */ jsxs8("div", { className: "ff-form__signature-preview", children: [
+      /* @__PURE__ */ jsx14("img", { src: signatureUrl, alt: "Signature" }),
+      !disabled && !readonly && /* @__PURE__ */ jsx14("div", { className: "ff-form__signature-actions", style: { marginTop: 8 }, children: /* @__PURE__ */ jsx14("button", { type: "button", className: "ff-form__btn ff-form__btn--draft", onClick: clear, children: "Clear & Re-sign" }) })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs8("div", { className: "ff-form__signature-container", children: [
+    /* @__PURE__ */ jsx14(
+      "canvas",
+      {
+        ref: canvasRef,
+        width: 400,
+        height: 200,
+        className: "ff-form__signature-canvas",
+        onMouseDown: startDrawing,
+        onMouseMove: draw,
+        onMouseUp: stopDrawing,
+        onMouseOut: stopDrawing,
+        onTouchStart: startDrawing,
+        onTouchMove: draw,
+        onTouchEnd: stopDrawing
+      }
+    ),
+    /* @__PURE__ */ jsxs8("div", { className: "ff-form__signature-actions", children: [
+      /* @__PURE__ */ jsx14("button", { type: "button", className: "ff-form__btn ff-form__btn--draft", onClick: clear, disabled: disabled || readonly, children: "Clear" }),
+      /* @__PURE__ */ jsx14("button", { type: "button", className: "ff-form__btn ff-form__btn--submit", onClick: save, disabled: disabled || readonly || isEmpty2, children: "Save Signature" })
+    ] })
+  ] });
+}
+
+// src/react/FieldRenderer.tsx
+import { jsx as jsx15, jsxs as jsxs9 } from "react/jsx-runtime";
 var DEFAULT_RENDERERS = {
   text: TextField,
   textarea: TextAreaField,
@@ -2138,6 +2286,7 @@ var DEFAULT_RENDERERS = {
   file: MediaField,
   image: MediaField,
   media: MediaField,
+  signature: SignatureField,
   choice: ChoiceField,
   placeholder: PlaceholderField,
   button: ButtonField,
@@ -2146,9 +2295,9 @@ var DEFAULT_RENDERERS = {
 };
 function FallbackField({ field }) {
   console.warn("[ff-forms] unsupported field type:", field.type, "id:", field.id);
-  return /* @__PURE__ */ jsxs8("div", { className: "ff-form__field-unsupported", children: [
+  return /* @__PURE__ */ jsxs9("div", { className: "ff-form__field-unsupported", children: [
     "Unsupported field type: ",
-    /* @__PURE__ */ jsx14("code", { children: field.type })
+    /* @__PURE__ */ jsx15("code", { children: field.type })
   ] });
 }
 function FieldRenderer(props) {
@@ -2157,13 +2306,17 @@ function FieldRenderer(props) {
     ...DEFAULT_RENDERERS,
     ...renderers
   };
-  const Component = registry[field.type];
-  if (!Component) return /* @__PURE__ */ jsx14(FallbackField, { field });
-  return /* @__PURE__ */ jsx14(Component, { ...props });
+  let fieldType = field.type;
+  if (fieldType === "media" && field.settings?.type === "signature") {
+    fieldType = "signature";
+  }
+  const Component = registry[fieldType];
+  if (!Component) return /* @__PURE__ */ jsx15(FallbackField, { field });
+  return /* @__PURE__ */ jsx15(Component, { ...props });
 }
 
 // src/react/SectionRenderer.tsx
-import { jsx as jsx15, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx16, jsxs as jsxs10 } from "react/jsx-runtime";
 function SectionRenderer({
   section,
   data,
@@ -2175,20 +2328,23 @@ function SectionRenderer({
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
-  fetchMedia
+  fetchMedia,
+  fetchLookupList
 }) {
   const visibleFields = section.fields.filter(
     (f) => !fieldStates[f.id]?.hidden
   );
   if (visibleFields.length === 0) return null;
-  return /* @__PURE__ */ jsx15("div", { className: "ff-form__section-fields", children: visibleFields.map((field) => {
+  return /* @__PURE__ */ jsx16("div", { className: "ff-form__section-fields", children: visibleFields.map((field) => {
     const state = fieldStates[field.id];
     const isReadonly = mode === "readonly" || (state?.readonly ?? false);
     const isDisabled = state?.disabled ?? false;
     const isRequired = state?.required ?? false;
     const errors = validationErrors[field.id];
-    const isLabelless = field.type === "placeholder" || field.type === "button";
-    return /* @__PURE__ */ jsxs9(
+    const settings = field.settings ?? {};
+    const showLabel = settings.label !== false;
+    const isLabelless = field.type === "placeholder" || field.type === "button" || !showLabel;
+    return /* @__PURE__ */ jsxs10(
       "div",
       {
         className: [
@@ -2197,12 +2353,12 @@ function SectionRenderer({
           isLabelless ? "ff-form__field--labelless" : ""
         ].filter(Boolean).join(" "),
         children: [
-          !isLabelless && (field.label || field.title) && /* @__PURE__ */ jsxs9("label", { className: "ff-form__label", htmlFor: field.id, children: [
+          !isLabelless && (field.label || field.title) && /* @__PURE__ */ jsxs10("label", { className: "ff-form__label", htmlFor: field.id, children: [
             field.label ?? field.title,
-            isRequired && /* @__PURE__ */ jsx15("span", { className: "ff-form__required", "aria-hidden": "true", children: " *" })
+            isRequired && /* @__PURE__ */ jsx16("span", { className: "ff-form__required", "aria-hidden": "true", children: " *" })
           ] }),
-          field.description && /* @__PURE__ */ jsx15("p", { className: "ff-form__field-description", children: field.description }),
-          /* @__PURE__ */ jsx15(
+          field.description && /* @__PURE__ */ jsx16("p", { className: "ff-form__field-description", children: field.description }),
+          /* @__PURE__ */ jsx16(
             FieldRenderer,
             {
               field,
@@ -2218,10 +2374,11 @@ function SectionRenderer({
               uploadMedia: (file) => uploadMediaForField(field.id, file),
               uploadMediaForField,
               deleteMedia: deleteMediaItem,
-              fetchMedia
+              fetchMedia,
+              fetchLookupList
             }
           ),
-          errors?.map((msg, i) => /* @__PURE__ */ jsx15("span", { className: "ff-form__error", role: "alert", children: msg }, i))
+          errors?.map((msg, i) => /* @__PURE__ */ jsx16("span", { className: "ff-form__error", role: "alert", children: msg }, i))
         ]
       },
       field.id
@@ -2230,7 +2387,7 @@ function SectionRenderer({
 }
 
 // src/react/SectionAccordion.tsx
-import { jsx as jsx16, jsxs as jsxs10 } from "react/jsx-runtime";
+import { jsx as jsx17, jsxs as jsxs11 } from "react/jsx-runtime";
 function SectionAccordion({
   sections,
   data,
@@ -2242,9 +2399,10 @@ function SectionAccordion({
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
-  fetchMedia
+  fetchMedia,
+  fetchLookupList
 }) {
-  const [, setExpanded] = useState5(
+  const [, setExpanded] = useState6(
     () => new Set(sections[0] ? [sections[0].id] : [])
   );
   function toggle(sectionId) {
@@ -2271,12 +2429,12 @@ function SectionAccordion({
       return state?.required && !data[f.id];
     }).length;
   }
-  return /* @__PURE__ */ jsx16("div", { className: "ff-form__sections", children: sections.filter((s) => !fieldStates[s.id]?.hidden).map((section) => {
+  return /* @__PURE__ */ jsx17("div", { className: "ff-form__sections", children: sections.filter((s) => !fieldStates[s.id]?.hidden).map((section) => {
     const isOpen = true;
     const errors = sectionErrorCount(section);
     const missing = sectionMissingCount(section);
     const hasBadge = errors > 0 || missing > 0;
-    return /* @__PURE__ */ jsxs10(
+    return /* @__PURE__ */ jsxs11(
       "div",
       {
         className: [
@@ -2285,7 +2443,7 @@ function SectionAccordion({
           errors > 0 ? "ff-form__section-accordion--error" : ""
         ].filter(Boolean).join(" "),
         children: [
-          /* @__PURE__ */ jsxs10(
+          /* @__PURE__ */ jsxs11(
             "button",
             {
               type: "button",
@@ -2293,8 +2451,8 @@ function SectionAccordion({
               "aria-expanded": isOpen,
               onClick: () => toggle(section.id),
               children: [
-                /* @__PURE__ */ jsx16("span", { className: "ff-form__section-header-title", children: section.title ?? "Section" }),
-                /* @__PURE__ */ jsx16("span", { className: "ff-form__section-header-right", children: hasBadge && /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17("span", { className: "ff-form__section-header-title", children: section.title ?? "Section" }),
+                /* @__PURE__ */ jsx17("span", { className: "ff-form__section-header-right", children: hasBadge && /* @__PURE__ */ jsx17(
                   "span",
                   {
                     className: `ff-form__section-badge ${errors > 0 ? "ff-form__section-badge--error" : "ff-form__section-badge--warn"}`,
@@ -2304,9 +2462,9 @@ function SectionAccordion({
               ]
             }
           ),
-          isOpen && /* @__PURE__ */ jsxs10("div", { className: "ff-form__section-body", children: [
-            section.description && /* @__PURE__ */ jsx16("p", { className: "ff-form__section-description", children: section.description }),
-            /* @__PURE__ */ jsx16(
+          isOpen && /* @__PURE__ */ jsxs11("div", { className: "ff-form__section-body", children: [
+            section.description && /* @__PURE__ */ jsx17("p", { className: "ff-form__section-description", children: section.description }),
+            /* @__PURE__ */ jsx17(
               SectionRenderer,
               {
                 section,
@@ -2319,7 +2477,8 @@ function SectionAccordion({
                 onFieldChange,
                 uploadMediaForField,
                 deleteMediaItem,
-                fetchMedia
+                fetchMedia,
+                fetchLookupList
               }
             )
           ] })
@@ -2331,7 +2490,7 @@ function SectionAccordion({
 }
 
 // src/react/PageDetailView.tsx
-import { jsx as jsx17, jsxs as jsxs11 } from "react/jsx-runtime";
+import { jsx as jsx18, jsxs as jsxs12 } from "react/jsx-runtime";
 function PageDetailView({
   page,
   pageIndex,
@@ -2348,11 +2507,12 @@ function PageDetailView({
   onFieldChange,
   uploadMediaForField,
   deleteMediaItem,
-  fetchMedia
+  fetchMedia,
+  fetchLookupList
 }) {
-  return /* @__PURE__ */ jsxs11("div", { className: "ff-form__page-detail", children: [
-    /* @__PURE__ */ jsxs11("div", { className: "ff-form__page-detail-topbar", children: [
-      /* @__PURE__ */ jsx17(
+  return /* @__PURE__ */ jsxs12("div", { className: "ff-form__page-detail", children: [
+    /* @__PURE__ */ jsxs12("div", { className: "ff-form__page-detail-topbar", children: [
+      /* @__PURE__ */ jsx18(
         "button",
         {
           type: "button",
@@ -2362,15 +2522,15 @@ function PageDetailView({
           children: "\u2039 Back"
         }
       ),
-      /* @__PURE__ */ jsxs11("span", { className: "ff-form__page-detail-pager", children: [
+      /* @__PURE__ */ jsxs12("span", { className: "ff-form__page-detail-pager", children: [
         pageIndex + 1,
         " / ",
         totalPages
       ] })
     ] }),
-    page.title && /* @__PURE__ */ jsx17("h2", { className: "ff-form__page-title", children: page.title }),
-    page.description && /* @__PURE__ */ jsx17("p", { className: "ff-form__page-description", children: page.description }),
-    /* @__PURE__ */ jsx17(
+    page.title && /* @__PURE__ */ jsx18("h2", { className: "ff-form__page-title", children: page.title }),
+    page.description && /* @__PURE__ */ jsx18("p", { className: "ff-form__page-description", children: page.description }),
+    /* @__PURE__ */ jsx18(
       SectionAccordion,
       {
         sections: page.sections,
@@ -2383,11 +2543,12 @@ function PageDetailView({
         onFieldChange,
         uploadMediaForField,
         deleteMediaItem,
-        fetchMedia
+        fetchMedia,
+        fetchLookupList
       }
     ),
-    totalPages > 1 && /* @__PURE__ */ jsxs11("div", { className: "ff-form__page-nav", children: [
-      /* @__PURE__ */ jsx17(
+    totalPages > 1 && /* @__PURE__ */ jsxs12("div", { className: "ff-form__page-nav", children: [
+      /* @__PURE__ */ jsx18(
         "button",
         {
           type: "button",
@@ -2397,7 +2558,7 @@ function PageDetailView({
           children: "\u2190 Previous"
         }
       ),
-      /* @__PURE__ */ jsx17(
+      /* @__PURE__ */ jsx18(
         "button",
         {
           type: "button",
@@ -2412,7 +2573,7 @@ function PageDetailView({
 }
 
 // src/react/FFForm.tsx
-import { jsx as jsx18, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx19, jsxs as jsxs13 } from "react/jsx-runtime";
 function FFForm(props) {
   const {
     mode = "create",
@@ -2435,13 +2596,38 @@ function FFForm(props) {
     uploadMediaForField,
     deleteMediaItem
   } = useFFForm(props);
-  const [currentPageId, setCurrentPageId] = useState6(null);
+  const [currentPageId, setCurrentPageId] = useState7(null);
+  const commonProps = useMemo2(() => ({
+    data,
+    fieldStates,
+    validationErrors,
+    mode,
+    renderers,
+    parentSchema: schema ?? void 0,
+    onFieldChange: changeField,
+    uploadMediaForField,
+    deleteMediaItem,
+    fetchMedia: props.onFetchMedia,
+    fetchLookupList: props.onFetchLookupList
+  }), [
+    data,
+    fieldStates,
+    validationErrors,
+    mode,
+    renderers,
+    schema,
+    changeField,
+    uploadMediaForField,
+    deleteMediaItem,
+    props.onFetchMedia,
+    props.onFetchLookupList
+  ]);
   if (loading) {
-    return /* @__PURE__ */ jsx18("div", { className: `ff-form ff-form--loading ${className ?? ""}`, style, children: /* @__PURE__ */ jsx18("div", { className: "ff-form__loading", "aria-live": "polite", "aria-busy": "true", children: "Loading\u2026" }) });
+    return /* @__PURE__ */ jsx19("div", { className: `ff-form ff-form--loading ${className ?? ""}`, style, children: /* @__PURE__ */ jsx19("div", { className: "ff-form__loading", "aria-live": "polite", "aria-busy": "true", children: "Loading\u2026" }) });
   }
   if (error) {
-    return /* @__PURE__ */ jsx18("div", { className: `ff-form ff-form--error ${className ?? ""}`, style, children: /* @__PURE__ */ jsxs12("div", { className: "ff-form__load-error", role: "alert", children: [
-      /* @__PURE__ */ jsx18("strong", { children: "Failed to load form:" }),
+    return /* @__PURE__ */ jsx19("div", { className: `ff-form ff-form--error ${className ?? ""}`, style, children: /* @__PURE__ */ jsxs13("div", { className: "ff-form__load-error", role: "alert", children: [
+      /* @__PURE__ */ jsx19("strong", { children: "Failed to load form:" }),
       " ",
       error.message
     ] }) });
@@ -2453,19 +2639,7 @@ function FFForm(props) {
   const isMultiPage = pages.length > 1;
   const currentPage = currentPageId ? pages.find((p) => p.id === currentPageId) ?? null : null;
   const currentPageIndex = currentPage ? pages.indexOf(currentPage) : -1;
-  const commonProps = {
-    data,
-    fieldStates,
-    validationErrors,
-    mode,
-    renderers,
-    parentSchema: schema,
-    onFieldChange: changeField,
-    uploadMediaForField,
-    deleteMediaItem,
-    fetchMedia: props.onFetchMedia
-  };
-  return /* @__PURE__ */ jsxs12(
+  return /* @__PURE__ */ jsxs13(
     "div",
     {
       className: [
@@ -2475,19 +2649,19 @@ function FFForm(props) {
       ].filter(Boolean).join(" "),
       style,
       children: [
-        schema.title && /* @__PURE__ */ jsxs12("div", { className: "ff-form__header", children: [
-          /* @__PURE__ */ jsx18("h1", { className: "ff-form__title", children: schema.title }),
-          schema.description && /* @__PURE__ */ jsx18("p", { className: "ff-form__description", children: schema.description })
+        schema.title && /* @__PURE__ */ jsxs13("div", { className: "ff-form__header", children: [
+          /* @__PURE__ */ jsx19("h1", { className: "ff-form__title", children: schema.title }),
+          schema.description && /* @__PURE__ */ jsx19("p", { className: "ff-form__description", children: schema.description })
         ] }),
-        hasGlobalErrors && /* @__PURE__ */ jsx18("div", { className: "ff-form__validation-banner", role: "alert", children: "Please correct the highlighted errors before submitting." }),
-        !isMultiPage && /* @__PURE__ */ jsx18(
+        hasGlobalErrors && /* @__PURE__ */ jsx19("div", { className: "ff-form__validation-banner", role: "alert", children: "Please correct the highlighted errors before submitting." }),
+        !isMultiPage && /* @__PURE__ */ jsx19(
           SectionAccordion,
           {
             sections: pages[0]?.sections ?? [],
             ...commonProps
           }
         ),
-        isMultiPage && !currentPage && /* @__PURE__ */ jsx18(
+        isMultiPage && !currentPage && /* @__PURE__ */ jsx19(
           PageListView,
           {
             pages,
@@ -2497,7 +2671,7 @@ function FFForm(props) {
             onSelectPage: (id) => setCurrentPageId(id)
           }
         ),
-        isMultiPage && currentPage && /* @__PURE__ */ jsx18(
+        isMultiPage && currentPage && /* @__PURE__ */ jsx19(
           PageDetailView,
           {
             page: currentPage,
@@ -2515,8 +2689,8 @@ function FFForm(props) {
             }
           }
         ),
-        !isReadonlyMode && (!isMultiPage || !currentPage) && /* @__PURE__ */ jsxs12("div", { className: "ff-form__actions", children: [
-          /* @__PURE__ */ jsx18(
+        !isReadonlyMode && (!isMultiPage || !currentPage) && /* @__PURE__ */ jsxs13("div", { className: "ff-form__actions", children: [
+          /* @__PURE__ */ jsx19(
             "button",
             {
               type: "button",
@@ -2525,7 +2699,7 @@ function FFForm(props) {
               children: saveDraftButtonText
             }
           ),
-          /* @__PURE__ */ jsx18(
+          /* @__PURE__ */ jsx19(
             "button",
             {
               type: "button",

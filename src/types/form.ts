@@ -101,11 +101,13 @@ export type FormFieldSettings = {
 };
 
 export type FormFieldSource = {
-  type?: "lookup" | "api" | string;
+  type?: "lookup" | "api" | "list" | string;
   id?: string;
   listId?: string;
   url?: string;
-  filters?: FormFieldSourceFilter[];
+  value?: string;
+  label?: string;
+  filters?: FormFieldSourceFilter[] | null;
   [key: string]: unknown;
 };
 

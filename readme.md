@@ -15,3 +15,15 @@ RUN PLAYGROUND
 ```bash
 npm run playground -- --port 5174
 ```
+
+
+```renderscript
+<FFForm
+  schema={schema}
+  onFetchLookupList={async (listId) => {
+    const response = await api.getLookupList(listId);
+    return response.data; // Має повертати об'єкт з { data: { items: [...] } }
+  }}
+  // ... інші пропси
+/>
+```
