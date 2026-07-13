@@ -9,8 +9,9 @@ export function DateField({ field, value, disabled, readonly, required, onChange
   function toInputValue(v: unknown): string {
     if (!v) return "";
     const s = String(v);
-    if (isTimeOnly) return s.length > 5 ? s.slice(11, 16) : s;
-    return includeTime ? s.slice(0, 16) : s.slice(0, 10);
+    if (isTimeOnly) return s.length > 10 ? s.slice(11, 16) : s;
+    if (includeTime) return s.slice(0, 16).replace(" ", "T");
+    return s.slice(0, 10);
   }
 
   const inputType = isTimeOnly ? "time" : includeTime ? "datetime-local" : "date";
@@ -25,7 +26,23 @@ export function DateField({ field, value, disabled, readonly, required, onChange
       readOnly={readonly}
       required={required}
       aria-required={required}
-      onChange={(e) => onChange(e.target.value || undefined)}
+      onChange={(e) => {
+        const val = e.target.value;
+        if (!val) {
+          onChange(undefined);
+          return;
+        }
+
+        if (isTimeOnly) {
+          const existing = String(value || "");
+          const datePart = existing.length > 10 ? existing.slice(0, 11) : new Date().toISOString().slice(0, 10) + " ";
+          onChange(`${datePart}${val}:00.000`);
+        } else if (includeTime) {
+          onChange(val.replace("T", " ") + ":00.000");
+        } else {
+          onChange(val + " 00:00:00.000");
+        }
+      }}
     />
   );
 }

@@ -55,6 +55,46 @@ export default function App() {
       <div style={{ flex: 1, maxWidth: 700 }}>
         <h2 style={{ marginTop: 0 }}>FF Forms Playground</h2>
         <FFForm
+            formData={
+                {
+                  "formVersionUuid": "019f3233-dc74-7239-8146-30f69d2a8bec",
+                  "submittedAt": "",
+                  "data": {
+                    "site_id": null,
+                    "job_id": null,
+                    "customer_name": null,
+                    "site_full_address": null,
+                    "collector_contractor_name": null,
+                    "time_of_arrival": "2026-07-13 18:21:00.000",
+                    "reason_for_test": null,
+                    "specify_reason": null,
+                    "donors": [],
+                    "date_01kx0z2yq9csmmce45nzac6eem": null,
+                    "patient_address": null,
+                    "patient_city": null,
+                    "patient_state": null,
+                    "patient_zip": null,
+                    "patient_phone": null,
+                    "physicians_clinic_name": null,
+                    "job_canceled_upon_arrival": null,
+                    "onsite_contact_name": null,
+                    "onsite_contact_signature": null,
+                    "cancelation_reason": null,
+                    "wait_time_required": null,
+                    "wait_time_comment": null,
+                    "total_donors_expected": 0,
+                    "number_of_donors_tested": 0,
+                    "time_of_departure": null,
+                    "odometer_start": null,
+                    "odometer_finish": null,
+                    "total_miles": null,
+                    "tracking_service": null,
+                    "shipment_tracking_number": null,
+                    "shipment_date": "2026-07-08T00:00:00.000Z",
+                    "button_01kx0z2yyyv9jny0tjxagn32ft": null
+                  },
+                  "metadata": {}
+                }}
           schema={schema as unknown as FormStructure}
           onSubmit={handleSubmit}
           onUploadMedia={handleUploadMedia}
