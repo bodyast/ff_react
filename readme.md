@@ -29,5 +29,5 @@ npm run playground -- --port 5174
 ```
 
 ```bash
-git add . && git commit -m "feat: ..." && git tag v1.0.6 && git push origin main --tags
+git add . && git commit -m "feat: ..." && git tag v1.0.14 && git push origin main --tags
 ```
